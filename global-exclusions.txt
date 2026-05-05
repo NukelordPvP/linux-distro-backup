@@ -1,0 +1,8 @@
+# Virtual/system dirs
+dev/
+proc/
+sys/
+
+# Cache
+var/cache
+tmp/

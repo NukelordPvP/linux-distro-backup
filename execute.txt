@@ -1,0 +1,8 @@
+backup-fedora.sh
+backup-manjaro.sh
+clone_img_to_drive.sh
+diff_source_vs_backup.sh
+extract_tarxz_to_drive.sh
+mount_&_chroot.sh
+mount_img.sh
+verify_img_vs_drive.sh

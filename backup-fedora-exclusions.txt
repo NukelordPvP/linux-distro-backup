@@ -1,0 +1,2 @@
+# Fedora-specific junk
+var/log/journal

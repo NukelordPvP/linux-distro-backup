@@ -1,0 +1,2 @@
+# Manjaro-specific stuff
+var/lib/pacman/sync
