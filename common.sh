@@ -1,18 +1,13 @@
 #!/bin/bash
-# Shared functions for backup scripts
 
 set -euo pipefail
 
-# Default mount location
 BACKUP_MOUNT="/mnt/backup"
 
-# Get script directory (caller-safe)
 get_script_dir() {
-    local SRC="${BASH_SOURCE[1]}"
-    cd "$(dirname "$SRC")" && pwd
+    cd "$(dirname "${BASH_SOURCE[1]}")" && pwd
 }
 
-# Determine backup directory
 get_backup_dir() {
     local SCRIPT_DIR="$1"
 
@@ -24,17 +19,14 @@ get_backup_dir() {
     fi
 }
 
-# Ensure directory exists
 ensure_dir() {
     mkdir -p "$1"
 }
 
-# Generate timestamp
 get_timestamp() {
     date +%Y%m%d_%H%M
 }
 
-# Build filename
 build_filename() {
     local PREFIX="$1"
     local DATESTAMP="$2"
@@ -48,18 +40,16 @@ build_filename() {
     fi
 }
 
-# Build log file path
 build_logfile() {
     local BACKUP_DIR="$1"
     local FILENAME="$2"
     echo "$BACKUP_DIR/${FILENAME%.tar.xz}.log"
 }
 
-# Load exclusions into array
+# FIXED: no broken array echoing
 load_excludes() {
     local SCRIPT_DIR="$1"
     shift
 
-    read -r -a EXCLUDES <<< "$("$SCRIPT_DIR/helper-process-exclusions.sh" "$@")"
-    echo "${EXCLUDES[@]}"
+    "$SCRIPT_DIR/helper-process-exclusions.sh" "$@"
 }
