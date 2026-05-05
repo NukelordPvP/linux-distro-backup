@@ -16,7 +16,7 @@ LOG_FILE="$(build_logfile "$BACKUP_DIR" "$FILENAME")"
 # Load exclusions
 read -r -a EXCLUDES <<< "$(load_excludes "$SCRIPT_DIR" \
     "$SCRIPT_DIR/global-exclusions.txt" \
-    "$SCRIPT_DIR/backup-fedora.txt"
+    "$SCRIPT_DIR/backup-fedora-exclusions.txt"
 )"
 
 {
