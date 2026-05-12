@@ -13,11 +13,25 @@ for FILE in "$@"; do
         continue
     fi
 
-    while IFS= read -r line; do
+    while IFS= read -r line || [ -n "$line" ]; do
+
+        # Trim whitespace
+        line="$(echo "$line" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+
+        # Skip comments/blank lines
         [[ -z "$line" || "$line" =~ ^# ]] && continue
 
-        CLEAN="${line#/}"
-        echo "--exclude=$CLEAN"
+        # Expand ~/
+        if [[ "$line" == ~/* ]]; then
+            line="${HOME}/${line#~/}"
+        fi
+
+        # Convert absolute path to tar-style relative path
+        if [[ "$line" == /* ]]; then
+            line="./${line#/}"
+        fi
+
+        echo "--exclude=$line"
 
     done < "$FILE"
 done

@@ -1,8 +1,10 @@
+# Exclusions
+
 # Virtual/system dirs
-dev/
-proc/
-sys/
+/dev/
+/proc/
+/sys/
 
 # Cache
-var/cache
-tmp/
+/var/cache
+/tmp/

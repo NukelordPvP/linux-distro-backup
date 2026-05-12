@@ -1,2 +1,2 @@
-# Manjaro-specific stuff
+# Exclusions
 var/lib/pacman/sync
