@@ -1,6 +1,6 @@
 #!/bin/bash
 # kill-running-backup.sh
-# Stops active distro backup jobs safely
+# Force kills active distro backup jobs automatically
 
 set -euo pipefail
 
@@ -18,53 +18,7 @@ FOUND=0
 log_section "Searching for running backups"
 
 # =========================================
-# Lock-based detection
-# =========================================
-
-for LOCK in "${LOCKS[@]}"; do
-
-    [[ -f "$LOCK" ]] || continue
-
-    PID="$(lsof -t "$LOCK" 2>/dev/null | head -n 1 || true)"
-
-    [[ -n "${PID:-}" ]] || continue
-
-    FOUND=1
-
-    CMD="$(ps -p "$PID" -o cmd= 2>/dev/null || true)"
-
-    log_warn "Found backup lock"
-
-    echo "    PID : $PID"
-    echo "    Lock: $LOCK"
-    echo "    Cmd : $CMD"
-
-    read -rp "Kill this process? (y/N): " CONFIRM
-
-    if [[ "$CONFIRM" =~ ^[Yy]$ ]]; then
-
-        log_info "Stopping PID $PID..."
-
-        kill "$PID" 2>/dev/null || true
-
-        sleep 2
-
-        if kill -0 "$PID" 2>/dev/null; then
-
-            log_warn "Process still alive, sending SIGKILL..."
-
-            kill -9 "$PID"
-
-        fi
-
-        log_ok "Process stopped"
-
-    fi
-
-done
-
-# =========================================
-# tar/xz fallback detection
+# Kill tar backup processes
 # =========================================
 
 while IFS= read -r LINE; do
@@ -73,40 +27,43 @@ while IFS= read -r LINE; do
 
     CMD="$(cut -d' ' -f2- <<< "$LINE")"
 
-    [[ -n "$PID" ]] || continue
+    [[ -n "${PID:-}" ]] || continue
 
     FOUND=1
 
     echo
-    log_warn "Found active tar/xz backup process"
+
+    log_warn "Found active backup process"
 
     echo "    PID : $PID"
     echo "    Cmd : $CMD"
 
-    read -rp "Kill this process? (y/N): " CONFIRM
+    log_info "Sending SIGTERM..."
 
-    if [[ "$CONFIRM" =~ ^[Yy]$ ]]; then
+    kill "$PID" 2>/dev/null || true
 
-        log_info "Stopping PID $PID..."
+    sleep 2
 
-        kill "$PID" 2>/dev/null || true
+    if kill -0 "$PID" 2>/dev/null; then
 
-        sleep 2
+        log_warn "Still running, sending SIGKILL..."
 
-        if kill -0 "$PID" 2>/dev/null; then
+        kill -9 "$PID" 2>/dev/null || true
 
-            log_warn "Process still alive, sending SIGKILL..."
-
-            kill -9 "$PID"
-
-        fi
-
-        log_ok "Process stopped"
+        sleep 1
 
     fi
 
+    if kill -0 "$PID" 2>/dev/null; then
+        log_warn "Failed to kill PID $PID"
+    else
+        log_ok "Killed PID $PID"
+    fi
+
 done < <(
-    ps -eo pid,args | grep -E 'tar .*\.tar\.(xz|gz|zst)' | grep -v grep || true
+    ps -eo pid,args | \
+    grep -E 'tar .*\.tar\.(xz|gz|zst)' | \
+    grep -v grep || true
 )
 
 # =========================================
