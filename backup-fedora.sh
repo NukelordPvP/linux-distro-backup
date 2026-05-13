@@ -2,6 +2,11 @@
 
 set -euo pipefail
 
+# Re-run script as root if needed
+if [[ $EUID -ne 0 ]]; then
+    exec sudo bash "$0" "$@"
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 source "$SCRIPT_DIR/common.sh"
@@ -10,6 +15,7 @@ source "$SCRIPT_DIR/helper-backup.sh"
 
 LOCK="/tmp/backup-fedora.lock"
 exec 200>"$LOCK"
+
 flock -n 200 || {
     log_warn "Fedora backup already running"
     exit 1
@@ -19,6 +25,7 @@ BACKUP_BACKGROUND="${BACKUP_BACKGROUND:-1}"
 
 DATESTAMP="$(get_timestamp)"
 BACKUP_DIR="$(get_backup_dir "$SCRIPT_DIR")"
+
 ensure_dir "$BACKUP_DIR"
 
 FILENAME="$(build_filename "ps4fedora" "$DATESTAMP" "${1:-}")"
@@ -47,6 +54,7 @@ run_job() {
 }
 
 if [[ "$BACKUP_BACKGROUND" == "1" ]]; then
+
     (
         run_job
     ) >"$LOG_FILE" 2>&1 &
@@ -54,14 +62,20 @@ if [[ "$BACKUP_BACKGROUND" == "1" ]]; then
     PID=$!
 
     log_ok "Backup running in background (PID: $PID)"
+
     echo "File: $BACKUP_FILE"
     echo "Log: $LOG_FILE"
     echo "Summary: $SUMMARY_LOG"
     echo "PID: $PID"
+
 else
+
     run_job >"$LOG_FILE" 2>&1
+
     log_ok "Backup finished"
+
     echo "File: $BACKUP_FILE"
     echo "Log: $LOG_FILE"
     echo "Summary: $SUMMARY_LOG"
+
 fi

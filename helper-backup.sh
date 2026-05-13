@@ -49,8 +49,11 @@ load_tar_excludes() {
             [[ -z "$ex" ]] && continue
             [[ "${ex:0:1}" == "#" ]] && continue
 
+            # resolve real user home even under sudo
+            REAL_HOME="$(getent passwd "${SUDO_USER:-$USER}" | cut -d: -f6)"
+
             # expand ~
-            [[ "$ex" == "~"* ]] && ex="${ex/#\~/$HOME}"
+            [[ "$ex" == "~"* ]] && ex="${ex/#\~/$REAL_HOME}"
 
             # normalize for tar
             ex="${ex#/}"

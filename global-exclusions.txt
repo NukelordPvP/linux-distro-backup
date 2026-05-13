@@ -48,7 +48,7 @@
 ~/.local/share/Steam/htmlcache
 
 # =========================
-# SSH (PRIVATE KEYS ONLY)
+# SSH
 # =========================
 # ~/.ssh
 # ~/.ssh/id_rsa
@@ -59,6 +59,7 @@
 # ~/.ssh/id_ecdsa.pub
 # ~/.ssh/*_key
 # ~/.ssh/*-cert
+/etc/ssh/ssh_host_*
 
 # =========================
 # GPG KEYS
@@ -175,6 +176,7 @@
 
 # =========================
 # MACHINE IDS
+# =========================
 /etc/machine-id
 /var/lib/dbus/machine-id
 
@@ -183,6 +185,7 @@
 # =========================
 ~/.kde/share/apps/kwallet
 ~/.local/share/kwalletd
+~/.config/kwalletrc
 
 # =========================
 # FLATPAK BROWSERS
