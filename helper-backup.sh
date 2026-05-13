@@ -1,6 +1,6 @@
 #!/bin/bash
 # helper-backup.sh
-# Shared backup helpers/configuration
+# Shared backup helpers/configuration (FIXED: proper traversal control)
 
 set -euo pipefail
 
@@ -17,6 +17,7 @@ BACKUP_COMPRESSION_LEVEL="${BACKUP_COMPRESSION_LEVEL:-9}"
 
 BACKUP_TAR_ARGS=(
     --one-file-system
+    --ignore-failed-read
 )
 
 # =========================================
@@ -26,23 +27,18 @@ BACKUP_TAR_ARGS=(
 get_compression_cmd() {
 
     case "$BACKUP_COMPRESSION" in
-
         xz)
             echo "xz -${BACKUP_COMPRESSION_LEVEL}"
             ;;
-
         gzip)
             echo "gzip -${BACKUP_COMPRESSION_LEVEL}"
             ;;
-
         zstd)
             echo "zstd -${BACKUP_COMPRESSION_LEVEL}"
             ;;
-
         *)
             fatal "Unsupported compression type: $BACKUP_COMPRESSION"
             ;;
-
     esac
 }
 
@@ -60,7 +56,34 @@ log_backup_config() {
 }
 
 # =========================================
-# Shared tar backup runner
+# EXCLUSION BUILDER (find-safe)
+# =========================================
+
+_build_find_prune() {
+
+    local args=()
+
+    for ex in "$@"; do
+
+        ex="${ex#--exclude=}"
+
+        # ignore empty
+        [[ -z "$ex" ]] && continue
+
+        args+=( -path "$ex" -o )
+
+    done
+
+    # remove trailing -o
+    if [[ "${#args[@]}" -gt 0 ]]; then
+        unset 'args[${#args[@]}-1]'
+    fi
+
+    echo "${args[@]}"
+}
+
+# =========================================
+# Shared backup runner (FIXED CORE)
 # =========================================
 
 run_backup_tar() {
@@ -73,8 +96,30 @@ run_backup_tar() {
 
     log_info "Using compression: $compression_cmd"
 
-    tar -cf "$backup_file" \
-        -I "$compression_cmd" \
-        "${BACKUP_TAR_ARGS[@]}" \
-        "$@"
+    cd /
+
+    # Build prune rules
+    local PRUNE_EXPR
+    PRUNE_EXPR=($(_build_find_prune "$@"))
+
+    if [[ "${#PRUNE_EXPR[@]}" -gt 0 ]]; then
+
+        log_info "Using find-based exclusion traversal"
+
+        find . \( "${PRUNE_EXPR[@]}" \) -prune -o -print0 \
+        | tar --null -cf "$backup_file" \
+            -I "$compression_cmd" \
+            "${BACKUP_TAR_ARGS[@]}" \
+            --files-from=-
+
+    else
+
+        log_info "No exclusions provided"
+
+        find . -print0 \
+        | tar --null -cf "$backup_file" \
+            -I "$compression_cmd" \
+            "${BACKUP_TAR_ARGS[@]}" \
+            --files-from=-
+    fi
 }

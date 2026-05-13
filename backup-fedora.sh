@@ -1,5 +1,4 @@
 #!/bin/bash
-# backup-fedora.sh
 
 set -euo pipefail
 
@@ -31,7 +30,9 @@ BACKUP_FILE="$BACKUP_DIR/$FILENAME"
 LOG_FILE="${BACKUP_FILE}.log"
 SUMMARY_LOG="${BACKUP_FILE}_summary.log"
 
-# === LOAD EXCLUSIONS ===
+# =========================================
+# Load exclusions
+# =========================================
 
 read -r -a EXCLUDES <<< "$(load_excludes "$SCRIPT_DIR" \
     "$SCRIPT_DIR/global-exclusions.txt" \
@@ -51,13 +52,11 @@ read -r -a EXCLUDES <<< "$(load_excludes "$SCRIPT_DIR" \
 
         CLEAN_EXCLUDE="${EXCLUDE#--exclude=}"
 
-        log_info "Skipping: $CLEAN_EXCLUDE"
+        log_info "Exclusion rule: $CLEAN_EXCLUDE"
 
         summary_exclude "$CLEAN_EXCLUDE"
 
     done
-
-    cd /
 
     both_info "Creating archive..."
 
@@ -66,8 +65,7 @@ read -r -a EXCLUDES <<< "$(load_excludes "$SCRIPT_DIR" \
         "${EXCLUDES[@]}" \
         --exclude="$BACKUP_FILE" \
         --exclude="$LOG_FILE" \
-        --exclude="$SUMMARY_LOG" \
-        ./
+        --exclude="$SUMMARY_LOG"
 
     FINAL_SIZE="$(du -h "$BACKUP_FILE" | awk '{print $1}')"
 
