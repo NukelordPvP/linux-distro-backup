@@ -15,6 +15,8 @@ flock -n 200 || {
     exit 1
 }
 
+BACKUP_BACKGROUND="${BACKUP_BACKGROUND:-0}"
+
 DATESTAMP="$(get_timestamp)"
 BACKUP_DIR="$(get_backup_dir "$SCRIPT_DIR")"
 ensure_dir "$BACKUP_DIR"
@@ -31,7 +33,7 @@ mapfile -t EXCLUDES < <(
         "$SCRIPT_DIR/backup-fedora-exclusions.txt"
 )
 
-{
+run_job() {
     log_info "Starting Fedora backup at $(date)"
 
     summary_info "Backup: $BACKUP_FILE"
@@ -45,10 +47,27 @@ mapfile -t EXCLUDES < <(
     done
 
     run_backup_tar "$BACKUP_FILE" "${EXCLUDES[@]}"
+}
 
-} >"$LOG_FILE" 2>&1 &
+if [[ "$BACKUP_BACKGROUND" == "1" ]]; then
 
-log_ok "Fedora backup started"
-echo "File: $BACKUP_FILE"
-echo "Log:  $LOG_FILE"
-echo "Summary: $SUMMARY_LOG"
+    run_job >"$LOG_FILE" 2>&1 &
+    BACKUP_PID=$!
+
+    log_ok "Fedora backup running in BACKGROUND (PID: $BACKUP_PID)"
+
+    echo "File: $BACKUP_FILE"
+    echo "Log:  $LOG_FILE"
+    echo "Summary: $SUMMARY_LOG"
+    echo "PID: $BACKUP_PID"
+
+else
+
+    run_job >"$LOG_FILE" 2>&1
+
+    log_ok "Fedora backup finished"
+
+    echo "File: $BACKUP_FILE"
+    echo "Log:  $LOG_FILE"
+    echo "Summary: $SUMMARY_LOG"
+fi

@@ -32,7 +32,7 @@ get_compression_cmd() {
 }
 
 # =========================================
-# EXCLUSION BUILDER (FIXED)
+# EXCLUSION BUILDER (SAFE)
 # =========================================
 
 _build_find_prune() {
@@ -45,13 +45,11 @@ _build_find_prune() {
         [[ "$ex" != /* ]] && continue
 
         ex=".${ex}"
-
         log_info "Pruning: $ex"
 
         args+=( -path "$ex" -o )
     done
 
-    # remove trailing -o safely
     if [[ "${#args[@]}" -gt 0 ]]; then
         unset 'args[${#args[@]}-1]'
     fi
@@ -60,7 +58,7 @@ _build_find_prune() {
 }
 
 # =========================================
-# SNAPSHOT BACKUP ENGINE (FIXED)
+# SNAPSHOT BACKUP ENGINE
 # =========================================
 
 run_backup_tar() {
@@ -78,7 +76,6 @@ run_backup_tar() {
 
     cd /
 
-    # always exclude output folder
     set -- "$@" "$backup_dir"
 
     log_info "Phase 1: building snapshot..."
@@ -91,7 +88,6 @@ run_backup_tar() {
 
     if [[ "${#PRUNE_ARGS[@]}" -gt 0 ]]; then
         log_info "Using find-based exclusion traversal"
-
         find . \( "${PRUNE_ARGS[@]}" \) -prune -o -print > "$FILELIST"
     else
         log_info "No exclusions"
