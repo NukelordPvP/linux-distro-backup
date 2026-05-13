@@ -5,8 +5,21 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/helper-logging.sh"
 
+# =========================
+# CONFIG
+# =========================
+
 BACKUP_COMPRESSION="${BACKUP_COMPRESSION:-xz}"
 BACKUP_COMPRESSION_LEVEL="${BACKUP_COMPRESSION_LEVEL:-9}"
+
+BACKUP_TAR_ARGS=(
+    --one-file-system
+    --ignore-failed-read
+)
+
+# =========================
+# COMPRESSION
+# =========================
 
 get_compression_cmd() {
     case "$BACKUP_COMPRESSION" in
@@ -18,12 +31,12 @@ get_compression_cmd() {
 }
 
 # =========================
-# CLEAN DATA-ONLY OUTPUT
+# EXCLUSIONS (DATA ONLY)
 # =========================
 
 load_tar_excludes() {
 
-    local file ex expanded
+    local file ex
 
     for file in "$@"; do
         [[ -f "$file" ]] || continue
@@ -39,7 +52,7 @@ load_tar_excludes() {
             # expand ~
             [[ "$ex" == "~"* ]] && ex="${ex/#\~/$HOME}"
 
-            # normalize
+            # normalize for tar
             ex="${ex#/}"
             ex="${ex%/}"
 
@@ -51,14 +64,26 @@ load_tar_excludes() {
     done
 }
 
+# =========================
+# BACKUP ENGINE (HARD VALIDATION)
+# =========================
+
 run_backup_tar() {
 
     local backup_file="$1"
     shift
 
+    # -------------------------
+    # VALIDATE OUTPUT PATH
+    # -------------------------
+    if [[ -z "$backup_file" ]]; then
+        fatal "Backup file is empty"
+    fi
+
     local compression_cmd
     compression_cmd="$(get_compression_cmd)"
 
+    log_info "Compression: $compression_cmd"
     cd /
 
     log_section "Loaded exclusions"
@@ -81,10 +106,22 @@ run_backup_tar() {
 
     tar -cf "$backup_file" \
         -I "$compression_cmd" \
-        --one-file-system \
-        --ignore-failed-read \
+        "${BACKUP_TAR_ARGS[@]}" \
         "${TAR_EXCLUDES[@]}" \
         /
 
-    log_ok "Backup complete"
+    local rc=$?
+
+    if [[ $rc -ne 0 ]]; then
+        fatal "tar failed with exit code $rc"
+    fi
+
+    # -------------------------
+    # VERIFY OUTPUT
+    # -------------------------
+    if [[ ! -f "$backup_file" ]]; then
+        fatal "Backup file was NOT created: $backup_file"
+    fi
+
+    log_ok "Backup complete: $backup_file"
 }
