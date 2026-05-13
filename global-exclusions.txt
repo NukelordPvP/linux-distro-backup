@@ -5,6 +5,12 @@
 /media
 
 # =========================
+# SWAP / RECOVERY
+# =========================
+/swapfile
+/lost+found
+
+# =========================
 # VIRTUAL FILESYSTEMS (KERNEL / SYSTEM)
 # =========================
 /dev
@@ -55,12 +61,137 @@
 # ~/.ssh/*-cert
 
 # =========================
-# GPG KEYS (CRITICAL PRIVACY)
+# GPG KEYS
 # =========================
 ~/.gnupg
+
+# =========================
+# DESKTOP KEYRINGS / TOKENS
+# =========================
+~/.local/share/keyrings
+
+# =========================
+# ROOT USER HISTORY
+# =========================
+/root/.bash_history
+/root/.zsh_history
 
 # =========================
 # SHELL HISTORY (COMMAND LEAKS)
 # =========================
 ~/.bash_history
 ~/.zsh_history
+
+# =========================
+# THUMBNAILS / RECENT FILES
+# =========================
+~/.thumbnails
+~/.local/share/recently-used.xbel
+
+# =========================
+# TRASH
+# =========================
+~/.local/share/Trash
+
+# =========================
+# SNAP (CACHE / DEVICE IDENTITY)
+# =========================
+/var/lib/snapd/cache
+/var/lib/snapd/cookie
+/var/lib/snapd/snaps
+/var/lib/snapd/device
+
+# =========================
+# DISCORD
+# =========================
+~/.config/discord
+~/.config/discordcanary
+~/.config/discordptb
+~/.config/BetterDiscord/
+
+# =========================
+# TeamSpeak
+# =========================
+~/.config/TeamSpeak
+~/.ts3client
+
+# =========================
+# Slack
+# =========================
+~/.config/Slack
+
+# =========================
+# Element
+# =========================
+~/.config/Element
+
+# =========================
+# Spotify
+# =========================
+~/.config/spotify
+
+# =========================
+# NETWORK / MACHINE IDENTITY
+# =========================
+/etc/NetworkManager/system-connections
+
+# =========================
+# Crypto Wallets
+# =========================
+~/.config/Exodus
+~/.config/Ledger Live
+~/.config/Ledger Wallet
+
+# =========================
+# VPN
+# =========================
+~/.config/Windscribe
+
+# =========================
+# MESSAGING / COMMUNICATION
+# =========================
+~/.config/nchat
+
+# =========================
+# FILE TRANSFER / CLOUD
+# =========================
+~/.config/rclone
+~/.config/filezilla
+
+# =========================
+# GitHub
+# =========================
+~/.config/GitHub Desktop
+
+# =========================
+# IDEs
+# =========================
+~/.config/JetBrains
+
+# =========================
+# PASSWORD STORES
+# =========================
+~/.password-store
+
+# =========================
+# MACHINE IDS
+/etc/machine-id
+/var/lib/dbus/machine-id
+
+# =========================
+# KDE WALLET
+# =========================
+~/.kde/share/apps/kwallet
+~/.local/share/kwalletd
+
+# =========================
+# FLATPAK BROWSERS
+# =========================
+~/.var/app/com.google.Chrome
+~/.var/app/com.google.ChromeDev
+~/.var/app/io.github.ungoogled_software.ungoogled_chromium
+~/.var/app/io.gitlab.librewolf-community
+~/.var/app/net.waterfox.waterfox
+~/.var/app/org.chromium.Chromium
+~/.var/app/org.mozilla.firefox
+
