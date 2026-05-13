@@ -32,7 +32,7 @@ get_compression_cmd() {
 }
 
 # =========================================
-# EXCLUSION LOADER (now LOGS + RETURNS ARGS)
+# DATA-ONLY EXCLUSION LOADER (NO LOGGING HERE)
 # =========================================
 
 load_tar_excludes() {
@@ -51,16 +51,14 @@ load_tar_excludes() {
             [[ -z "$ex" ]] && continue
             [[ "${ex:0:1}" == "#" ]] && continue
 
-            # normalize path
+            # normalize
             ex="${ex#/}"
             ex="${ex%/}"
 
             [[ -z "$ex" ]] && continue
 
-            # 🔥 IMPORTANT: log it so you SEE it
-            log_info "Exclude: /$ex"
-
-            printf -- "--exclude=%s\n" "$ex"
+            # OUTPUT ONLY CLEAN DATA
+            printf '%s\n' "$ex"
 
         done < "$file"
     done
@@ -84,11 +82,14 @@ run_backup_tar() {
     log_section "Loaded exclusions"
 
     local TAR_EXCLUDES=()
-    mapfile -t TAR_EXCLUDES < <(
-        load_tar_excludes "$@"
-    )
 
-    # always exclude backup directory
+    # SAFE: logging happens OUTSIDE data pipeline
+    while IFS= read -r ex; do
+        log_info "Exclude: /$ex"
+        TAR_EXCLUDES+=( "--exclude=$ex" )
+    done < <(load_tar_excludes "$@")
+
+    # always exclude backup output directory
     local backup_dir
     backup_dir="$(dirname "$backup_file")"
     backup_dir="${backup_dir#/}"
