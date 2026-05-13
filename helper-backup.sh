@@ -1,26 +1,12 @@
 #!/bin/bash
-# helper-backup.sh
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/helper-logging.sh"
 
-# =========================
-# CONFIG
-# =========================
-
 BACKUP_COMPRESSION="${BACKUP_COMPRESSION:-xz}"
 BACKUP_COMPRESSION_LEVEL="${BACKUP_COMPRESSION_LEVEL:-9}"
-
-BACKUP_TAR_ARGS=(
-    --one-file-system
-    --ignore-failed-read
-)
-
-# =========================
-# COMPRESSION
-# =========================
 
 get_compression_cmd() {
     case "$BACKUP_COMPRESSION" in
@@ -32,61 +18,38 @@ get_compression_cmd() {
 }
 
 # =========================
-# EXCLUSION LOADER (clean + correct)
+# CLEAN DATA-ONLY OUTPUT
 # =========================
 
 load_tar_excludes() {
 
-    local file ex expanded normalized
+    local file ex expanded
 
     for file in "$@"; do
         [[ -f "$file" ]] || continue
 
         while IFS= read -r ex || [[ -n "$ex" ]]; do
 
-            # trim whitespace
             ex="${ex#"${ex%%[![:space:]]*}"}"
             ex="${ex%"${ex##*[![:space:]]}"}"
 
             [[ -z "$ex" ]] && continue
             [[ "${ex:0:1}" == "#" ]] && continue
 
-            # =========================
             # expand ~
-            # =========================
-            if [[ "$ex" == "~"* ]]; then
-                expanded="${ex/#\~/$HOME}"
-            else
-                expanded="$ex"
-            fi
+            [[ "$ex" == "~"* ]] && ex="${ex/#\~/$HOME}"
 
-            # =========================
-            # normalize for tar
-            # =========================
-            expanded="${expanded#/}"
-            expanded="${expanded%/}"
+            # normalize
+            ex="${ex#/}"
+            ex="${ex%/}"
 
-            [[ -z "$expanded" ]] && continue
+            [[ -z "$ex" ]] && continue
 
-            normalized="$expanded"
-
-            # =========================
-            # log ONLY final form
-            # =========================
-            log_info "Exclude: /$normalized"
-
-            # =========================
-            # output ONLY tool-ready value
-            # =========================
-            printf -- "--exclude=%s\n" "$normalized"
+            printf '%s\n' "$ex"
 
         done < "$file"
     done
 }
-
-# =========================
-# BACKUP ENGINE
-# =========================
 
 run_backup_tar() {
 
@@ -96,7 +59,6 @@ run_backup_tar() {
     local compression_cmd
     compression_cmd="$(get_compression_cmd)"
 
-    log_info "Compression: $compression_cmd"
     cd /
 
     log_section "Loaded exclusions"
@@ -104,10 +66,10 @@ run_backup_tar() {
     local TAR_EXCLUDES=()
 
     while IFS= read -r ex; do
-        TAR_EXCLUDES+=( "$ex" )
+        log_info "Exclude: /$ex"
+        TAR_EXCLUDES+=( "--exclude=$ex" )
     done < <(load_tar_excludes "$@")
 
-    # always exclude backup directory
     local backup_dir
     backup_dir="$(dirname "$backup_file")"
     backup_dir="${backup_dir#/}"
@@ -119,9 +81,10 @@ run_backup_tar() {
 
     tar -cf "$backup_file" \
         -I "$compression_cmd" \
-        "${BACKUP_TAR_ARGS[@]}" \
+        --one-file-system \
+        --ignore-failed-read \
         "${TAR_EXCLUDES[@]}" \
         /
 
-    log_ok "Backup complete: $backup_file"
+    log_ok "Backup complete"
 }

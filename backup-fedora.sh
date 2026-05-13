@@ -3,56 +3,88 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-source "$SCRIPT_DIR/common.sh"
 source "$SCRIPT_DIR/helper-logging.sh"
-source "$SCRIPT_DIR/helper-backup.sh"
 
-LOCK="/tmp/backup-fedora.lock"
-exec 200>"$LOCK"
-flock -n 200 || {
-    log_warn "Fedora backup already running"
-    exit 1
+BACKUP_COMPRESSION="${BACKUP_COMPRESSION:-xz}"
+BACKUP_COMPRESSION_LEVEL="${BACKUP_COMPRESSION_LEVEL:-9}"
+
+get_compression_cmd() {
+    case "$BACKUP_COMPRESSION" in
+        xz) echo "xz -${BACKUP_COMPRESSION_LEVEL}" ;;
+        gzip) echo "gzip -${BACKUP_COMPRESSION_LEVEL}" ;;
+        zstd) echo "zstd -${BACKUP_COMPRESSION_LEVEL}" ;;
+        *) fatal "Unsupported compression: $BACKUP_COMPRESSION" ;;
+    esac
 }
 
-BACKUP_BACKGROUND="${BACKUP_BACKGROUND:-0}"
+# =========================
+# CLEAN DATA-ONLY OUTPUT
+# =========================
 
-DATESTAMP="$(get_timestamp)"
-BACKUP_DIR="$(get_backup_dir "$SCRIPT_DIR")"
-ensure_dir "$BACKUP_DIR"
+load_tar_excludes() {
 
-FILENAME="$(build_filename "ps4fedora" "$DATESTAMP" "${1:-}")"
+    local file ex expanded
 
-BACKUP_FILE="$BACKUP_DIR/$FILENAME"
-LOG_FILE="${BACKUP_FILE}.log"
-SUMMARY_LOG="${BACKUP_FILE}_summary.log"
+    for file in "$@"; do
+        [[ -f "$file" ]] || continue
 
-run_job() {
+        while IFS= read -r ex || [[ -n "$ex" ]]; do
 
-    log_info "Starting Fedora backup at $(date)"
+            ex="${ex#"${ex%%[![:space:]]*}"}"
+            ex="${ex%"${ex##*[![:space:]]}"}"
 
-    summary_info "Backup: $BACKUP_FILE"
-    summary_info "Compression: $BACKUP_COMPRESSION -${BACKUP_COMPRESSION_LEVEL}"
+            [[ -z "$ex" ]] && continue
+            [[ "${ex:0:1}" == "#" ]] && continue
 
-    run_backup_tar \
-        "$BACKUP_FILE" \
-        "$SCRIPT_DIR/global-exclusions.txt" \
-        "$SCRIPT_DIR/backup-fedora-exclusions.txt"
+            # expand ~
+            [[ "$ex" == "~"* ]] && ex="${ex/#\~/$HOME}"
+
+            # normalize
+            ex="${ex#/}"
+            ex="${ex%/}"
+
+            [[ -z "$ex" ]] && continue
+
+            printf '%s\n' "$ex"
+
+        done < "$file"
+    done
 }
 
-if [[ "$BACKUP_BACKGROUND" == "1" ]]; then
-    run_job >"$LOG_FILE" 2>&1 &
-    PID=$!
+run_backup_tar() {
 
-    log_ok "Backup running in background (PID: $PID)"
-    echo "File: $BACKUP_FILE"
-    echo "Log: $LOG_FILE"
-    echo "Summary: $SUMMARY_LOG"
-    echo "PID: $PID"
-else
-    run_job >"$LOG_FILE" 2>&1
-    log_ok "Backup finished"
-    echo "File: $BACKUP_FILE"
-    echo "Log: $LOG_FILE"
-    echo "Summary: $SUMMARY_LOG"
-fi
+    local backup_file="$1"
+    shift
+
+    local compression_cmd
+    compression_cmd="$(get_compression_cmd)"
+
+    cd /
+
+    log_section "Loaded exclusions"
+
+    local TAR_EXCLUDES=()
+
+    while IFS= read -r ex; do
+        log_info "Exclude: /$ex"
+        TAR_EXCLUDES+=( "--exclude=$ex" )
+    done < <(load_tar_excludes "$@")
+
+    local backup_dir
+    backup_dir="$(dirname "$backup_file")"
+    backup_dir="${backup_dir#/}"
+
+    log_info "Exclude: /$backup_dir"
+    TAR_EXCLUDES+=( "--exclude=$backup_dir" )
+
+    log_info "Creating archive..."
+
+    tar -cf "$backup_file" \
+        -I "$compression_cmd" \
+        --one-file-system \
+        --ignore-failed-read \
+        "${TAR_EXCLUDES[@]}" \
+        /
+
+    log_ok "Backup complete"
+}
