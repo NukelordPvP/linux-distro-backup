@@ -1,15 +1,14 @@
 #!/bin/bash
 # helper-backup.sh
-# Shared backup helpers/configuration (FIXED: stable find-based pruning)
+# Snapshot-based backup engine (2-phase: list → archive)
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
 source "$SCRIPT_DIR/helper-logging.sh"
 
 # =========================================
-# Backup configuration
+# CONFIG
 # =========================================
 
 BACKUP_COMPRESSION="${BACKUP_COMPRESSION:-xz}"
@@ -21,41 +20,21 @@ BACKUP_TAR_ARGS=(
 )
 
 # =========================================
-# Compression helper
+# COMPRESSION
 # =========================================
 
 get_compression_cmd() {
     case "$BACKUP_COMPRESSION" in
-        xz)
-            echo "xz -${BACKUP_COMPRESSION_LEVEL}"
-            ;;
-        gzip)
-            echo "gzip -${BACKUP_COMPRESSION_LEVEL}"
-            ;;
-        zstd)
-            echo "zstd -${BACKUP_COMPRESSION_LEVEL}"
-            ;;
-        *)
-            fatal "Unsupported compression type: $BACKUP_COMPRESSION"
-            ;;
+        xz) echo "xz -${BACKUP_COMPRESSION_LEVEL}" ;;
+        gzip) echo "gzip -${BACKUP_COMPRESSION_LEVEL}" ;;
+        zstd) echo "zstd -${BACKUP_COMPRESSION_LEVEL}" ;;
+        *) fatal "Unsupported compression: $BACKUP_COMPRESSION" ;;
     esac
 }
 
 # =========================================
-# Log helpers
-# =========================================
-
-log_backup_config() {
-    summary_info "Compression: ${BACKUP_COMPRESSION} -${BACKUP_COMPRESSION_LEVEL}"
-
-    for ARG in "${BACKUP_TAR_ARGS[@]}"; do
-        summary_info "tar arg: $ARG"
-    done
-}
-
-# =========================================
-# EXCLUSION BUILDER (FIXED)
-# Converts /mnt → ./mnt for find -path matching
+# EXCLUSION BUILDER
+# convert /path → ./path (for find . snapshot)
 # =========================================
 
 _build_find_prune() {
@@ -66,28 +45,24 @@ _build_find_prune() {
     for ex in "$@"; do
 
         ex="${ex#--exclude=}"
-
         [[ -z "$ex" ]] && continue
+        [[ "$ex" != /* ]] && continue
 
-        # convert absolute /path → ./path for find . traversal
-        if [[ "$ex" == /* ]]; then
-            ex=".${ex}"
-        fi
+        ex=".${ex}"
+
+        log_info "Pruning: $ex"
 
         args+=( -path "$ex" -o )
 
     done
 
-    # remove trailing -o safely
-    if [[ "${#args[@]}" -gt 0 ]]; then
-        unset 'args[${#args[@]}-1]'
-    fi
+    [[ "${#args[@]}" -gt 0 ]] && unset 'args[${#args[@]}-1]'
 
     printf '%s\0' "${args[@]}"
 }
 
 # =========================================
-# Shared backup runner (FIXED CORE)
+# SNAPSHOT BACKUP ENGINE
 # =========================================
 
 run_backup_tar() {
@@ -95,36 +70,45 @@ run_backup_tar() {
     local backup_file="$1"
     shift
 
+    local backup_dir
+    backup_dir="$(dirname "$backup_file")"
+
     local compression_cmd
     compression_cmd="$(get_compression_cmd)"
 
-    log_info "Using compression: $compression_cmd"
+    log_info "Compression: $compression_cmd"
 
     cd /
 
-    # Build prune expression safely
+    # ALWAYS exclude output directory (self-protection)
+    set -- "$@" "$backup_dir"
+
+    log_info "Phase 1: building file snapshot list..."
+
+    local FILELIST
+    FILELIST="$(mktemp)"
+
     local PRUNE_EXPR=()
     mapfile -d '' -t PRUNE_EXPR < <(_build_find_prune "$@")
 
     if [[ "${#PRUNE_EXPR[@]}" -gt 0 ]]; then
 
-        log_info "Using find-based exclusion traversal"
-
-        find . \( "${PRUNE_EXPR[@]}" \) -prune -o -print0 \
-        | tar --null -cf "$backup_file" \
-            -I "$compression_cmd" \
-            "${BACKUP_TAR_ARGS[@]}" \
-            --files-from=-
+        find . \( "${PRUNE_EXPR[@]}" \) -prune -o -print > "$FILELIST"
 
     else
 
-        log_info "No exclusions provided"
-
-        find . -print0 \
-        | tar --null -cf "$backup_file" \
-            -I "$compression_cmd" \
-            "${BACKUP_TAR_ARGS[@]}" \
-            --files-from=-
+        find . -print > "$FILELIST"
 
     fi
+
+    log_info "Phase 2: creating archive..."
+
+    tar -cf "$backup_file" \
+        -I "$compression_cmd" \
+        "${BACKUP_TAR_ARGS[@]}" \
+        -T "$FILELIST"
+
+    rm -f "$FILELIST"
+
+    log_ok "Backup complete: $backup_file"
 }
