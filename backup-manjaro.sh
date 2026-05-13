@@ -34,8 +34,6 @@ run_job() {
     summary_info "Backup: $BACKUP_FILE"
     summary_info "Compression: $BACKUP_COMPRESSION -${BACKUP_COMPRESSION_LEVEL}"
 
-    log_section "Loaded exclusions"
-
     run_backup_tar \
         "$BACKUP_FILE" \
         "$SCRIPT_DIR/global-exclusions.txt" \
@@ -43,7 +41,6 @@ run_job() {
 }
 
 if [[ "$BACKUP_BACKGROUND" == "1" ]]; then
-
     run_job >"$LOG_FILE" 2>&1 &
     PID=$!
 
@@ -52,11 +49,8 @@ if [[ "$BACKUP_BACKGROUND" == "1" ]]; then
     echo "Log: $LOG_FILE"
     echo "Summary: $SUMMARY_LOG"
     echo "PID: $PID"
-
 else
-
     run_job >"$LOG_FILE" 2>&1
-
     log_ok "Backup finished"
     echo "File: $BACKUP_FILE"
     echo "Log: $LOG_FILE"

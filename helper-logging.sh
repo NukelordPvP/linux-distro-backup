@@ -25,7 +25,7 @@ fatal() {
 }
 
 # =========================
-# File logging (summary only)
+# File logging only
 # =========================
 
 summary_log() {
