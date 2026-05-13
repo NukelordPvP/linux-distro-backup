@@ -1,79 +1,116 @@
 #!/bin/bash
-# Verifies mounted .img source vs backup directory
+# verify_img_vs_drive.sh
+# Verifies mounted .img source vs mounted target drive
 
 set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+source "$SCRIPT_DIR/helper-logging.sh"
 
 SRC="${1:-/mnt/distro-img}"
 TARGET="${2:-/media/$USER/psxitarch}"
 CHECK_USER="${3:-vvsx87}"
 
 # === VALIDATION ===
-if [[ ! -d "$SRC" ]]; then
-    echo "[!] Source not mounted: $SRC"
-    exit 1
-fi
 
-if [[ ! -d "$TARGET" ]]; then
-    echo "[!] Backup not mounted: $TARGET"
-    exit 1
-fi
+[[ -d "$SRC" ]] || \
+    fatal "Source directory missing: $SRC"
 
-if ! mountpoint -q "$SRC"; then
-    echo "[!] Source is not a mountpoint: $SRC"
-    exit 1
-fi
+[[ -d "$TARGET" ]] || \
+    fatal "Target directory missing: $TARGET"
 
-if ! mountpoint -q "$TARGET"; then
-    echo "[!] Target is not a mountpoint: $TARGET"
-    exit 1
-fi
+mountpoint -q "$SRC" || \
+    fatal "Source is not mounted: $SRC"
 
-echo "=== Verification Report ==="
+mountpoint -q "$TARGET" || \
+    fatal "Target is not mounted: $TARGET"
+
+# === REPORT HEADER ===
+
+log_section "Verification Report"
+
 echo "Source : $SRC"
-echo "Backup : $TARGET"
+echo "Target : $TARGET"
 
-# === ROOT LISTING ===
+# === ROOT LISTINGS ===
+
 echo
-echo "=== Root directories ==="
+
+log_section "Root directories (source)"
 ls -lah "$SRC"
+
 echo
+
+log_section "Root directories (target)"
 ls -lah "$TARGET"
 
 # === PASSWD CHECK ===
+
 echo
-echo "=== /etc/passwd comparison ==="
+
+log_section "/etc/passwd comparison"
 
 if [[ -f "$SRC/etc/passwd" && -f "$TARGET/etc/passwd" ]]; then
+
     echo "[Source]"
     grep "^$CHECK_USER:" "$SRC/etc/passwd" || echo "Not found"
 
-    echo "[Backup]"
+    echo
+
+    echo "[Target]"
     grep "^$CHECK_USER:" "$TARGET/etc/passwd" || echo "Not found"
+
 else
-    echo "[!] Missing /etc/passwd in one or both systems"
+
+    log_warn "Missing /etc/passwd in one or both systems"
+
 fi
 
-# === ROOT FILE COUNTS (better than du misuse) ===
+# === FILE COUNTS ===
+
 echo
-echo "=== File counts (top-level) ==="
+
+log_section "Top-level file counts"
 
 echo "[Source]"
 find "$SRC" -maxdepth 1 -type f | wc -l
 
-echo "[Backup]"
+echo
+
+echo "[Target]"
 find "$TARGET" -maxdepth 1 -type f | wc -l
 
 # === /usr/lib CHECK ===
-echo
-echo "=== /usr/lib comparison ==="
-
-[[ -d "$SRC/usr/lib" ]] && ls -la "$SRC/usr/lib/" || echo "Missing source /usr/lib"
-[[ -d "$TARGET/usr/lib" ]] && ls -la "$TARGET/usr/lib/" || echo "Missing backup /usr/lib"
-
-# === DIFFERENCE REPORT (FULL, NO FILTERING) ===
-echo
-echo "=== Full diff report ==="
-diff -rN "$SRC" "$TARGET" || true
 
 echo
-echo "[✓] Verification complete"
+
+log_section "/usr/lib comparison"
+
+if [[ -d "$SRC/usr/lib" ]]; then
+    ls -la "$SRC/usr/lib/"
+else
+    log_warn "Missing source /usr/lib"
+fi
+
+echo
+
+if [[ -d "$TARGET/usr/lib" ]]; then
+    ls -la "$TARGET/usr/lib/"
+else
+    log_warn "Missing target /usr/lib"
+fi
+
+# === FULL DIFF ===
+
+echo
+
+log_section "Full diff report"
+
+diff -rN \
+    --no-dereference \
+    "$SRC" "$TARGET" || true
+
+echo
+
+log_ok "Verification complete"

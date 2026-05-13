@@ -1,19 +1,26 @@
 #!/bin/bash
+# helper-process-exclusions.sh
 
 set -euo pipefail
 
-if [ "$#" -lt 1 ]; then
-    echo "Usage: $0 <exclusion_file1> [exclusion_file2 ...]"
-    exit 1
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+source "$SCRIPT_DIR/helper-logging.sh"
+
+if [[ "$#" -lt 1 ]]; then
+    fatal "Usage: $0 <exclusion_file1> [exclusion_file2 ...]"
 fi
 
 for FILE in "$@"; do
-    if [ ! -f "$FILE" ]; then
-        echo "[!] Warning: missing exclusion file: $FILE" >&2
+
+    if [[ ! -f "$FILE" ]]; then
+        log_warn "Missing exclusion file: $FILE"
         continue
     fi
 
-    while IFS= read -r line || [ -n "$line" ]; do
+    log_info "Loading exclusions from: $FILE"
+
+    while IFS= read -r line || [[ -n "$line" ]]; do
 
         # Trim whitespace
         line="$(echo "$line" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
@@ -31,7 +38,10 @@ for FILE in "$@"; do
             line="./${line#/}"
         fi
 
+        summary_exclude "$line"
+
         echo "--exclude=$line"
 
     done < "$FILE"
+
 done

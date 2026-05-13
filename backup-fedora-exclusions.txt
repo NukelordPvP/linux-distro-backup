@@ -1,3 +1,4 @@
 # Exclusions
-/var/log/journal
+
+# Games
 ~/.local/share/Steam/steamapps/common/

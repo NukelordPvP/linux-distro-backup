@@ -1,10 +1,18 @@
 # Exclusions
 
+# Mounted dirs
+/mnt
+
 # Virtual/system dirs
 /dev/
 /proc/
 /sys/
 
 # Cache
+/var/tmp
 /var/cache
 /tmp/
+~/.cache
+
+# Logging
+/var/log/journal

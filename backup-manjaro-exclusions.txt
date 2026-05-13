@@ -1,2 +1,8 @@
 # Exclusions
+
+# Pacman repository sync databases
+# Regenerated with: sudo pacman -Sy
 var/lib/pacman/sync
+
+# Games
+~/.local/share/Steam/steamapps/common/
