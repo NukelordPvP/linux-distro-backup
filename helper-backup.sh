@@ -6,9 +6,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/helper-logging.sh"
 
-# =========================
+# =========================================
 # CONFIG
-# =========================
+# =========================================
 
 BACKUP_COMPRESSION="${BACKUP_COMPRESSION:-xz}"
 BACKUP_COMPRESSION_LEVEL="${BACKUP_COMPRESSION_LEVEL:-9}"
@@ -18,9 +18,9 @@ BACKUP_TAR_ARGS=(
     --ignore-failed-read
 )
 
-# =========================
+# =========================================
 # COMPRESSION
-# =========================
+# =========================================
 
 get_compression_cmd() {
     case "$BACKUP_COMPRESSION" in
@@ -31,9 +31,9 @@ get_compression_cmd() {
     esac
 }
 
-# =========================
-# EXCLUSION LOADER (tar args)
-# =========================
+# =========================================
+# EXCLUSION LOADER (now LOGS + RETURNS ARGS)
+# =========================================
 
 load_tar_excludes() {
 
@@ -57,15 +57,18 @@ load_tar_excludes() {
 
             [[ -z "$ex" ]] && continue
 
+            # 🔥 IMPORTANT: log it so you SEE it
+            log_info "Exclude: /$ex"
+
             printf -- "--exclude=%s\n" "$ex"
 
         done < "$file"
     done
 }
 
-# =========================
+# =========================================
 # BACKUP ENGINE
-# =========================
+# =========================================
 
 run_backup_tar() {
 
@@ -78,16 +81,19 @@ run_backup_tar() {
     log_info "Compression: $compression_cmd"
     cd /
 
-    log_info "Loading exclusions..."
+    log_section "Loaded exclusions"
 
     local TAR_EXCLUDES=()
-    mapfile -t TAR_EXCLUDES < <(load_tar_excludes "$@")
+    mapfile -t TAR_EXCLUDES < <(
+        load_tar_excludes "$@"
+    )
 
     # always exclude backup directory
     local backup_dir
     backup_dir="$(dirname "$backup_file")"
     backup_dir="${backup_dir#/}"
 
+    log_info "Exclude: /$backup_dir"
     TAR_EXCLUDES+=( "--exclude=$backup_dir" )
 
     log_info "Creating archive..."
