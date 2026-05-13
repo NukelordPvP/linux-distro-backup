@@ -1,6 +1,5 @@
 #!/bin/bash
 # helper-backup.sh
-# Snapshot-based backup engine (2-phase: list → archive)
 
 set -euo pipefail
 
@@ -33,17 +32,14 @@ get_compression_cmd() {
 }
 
 # =========================================
-# EXCLUSION BUILDER
-# convert /path → ./path (for find . snapshot)
+# EXCLUSION BUILDER (FIXED)
 # =========================================
 
 _build_find_prune() {
-
     local ex
     local args=()
 
     for ex in "$@"; do
-
         ex="${ex#--exclude=}"
         [[ -z "$ex" ]] && continue
         [[ "$ex" != /* ]] && continue
@@ -53,16 +49,18 @@ _build_find_prune() {
         log_info "Pruning: $ex"
 
         args+=( -path "$ex" -o )
-
     done
 
-    [[ "${#args[@]}" -gt 0 ]] && unset 'args[${#args[@]}-1]'
+    # remove trailing -o safely
+    if [[ "${#args[@]}" -gt 0 ]]; then
+        unset 'args[${#args[@]}-1]'
+    fi
 
-    printf '%s\0' "${args[@]}"
+    printf '%s\n' "${args[@]}"
 }
 
 # =========================================
-# SNAPSHOT BACKUP ENGINE
+# SNAPSHOT BACKUP ENGINE (FIXED)
 # =========================================
 
 run_backup_tar() {
@@ -80,28 +78,27 @@ run_backup_tar() {
 
     cd /
 
-    # ALWAYS exclude output directory (self-protection)
+    # always exclude output folder
     set -- "$@" "$backup_dir"
 
-    log_info "Phase 1: building file snapshot list..."
+    log_info "Phase 1: building snapshot..."
 
     local FILELIST
     FILELIST="$(mktemp)"
 
-    local PRUNE_EXPR=()
-    mapfile -d '' -t PRUNE_EXPR < <(_build_find_prune "$@")
+    local PRUNE_ARGS=()
+    mapfile -t PRUNE_ARGS < <(_build_find_prune "$@")
 
-    if [[ "${#PRUNE_EXPR[@]}" -gt 0 ]]; then
+    if [[ "${#PRUNE_ARGS[@]}" -gt 0 ]]; then
+        log_info "Using find-based exclusion traversal"
 
-        find . \( "${PRUNE_EXPR[@]}" \) -prune -o -print > "$FILELIST"
-
+        find . \( "${PRUNE_ARGS[@]}" \) -prune -o -print > "$FILELIST"
     else
-
+        log_info "No exclusions"
         find . -print > "$FILELIST"
-
     fi
 
-    log_info "Phase 2: creating archive..."
+    log_info "Phase 2: archiving..."
 
     tar -cf "$backup_file" \
         -I "$compression_cmd" \

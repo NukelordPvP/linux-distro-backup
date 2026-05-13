@@ -18,21 +18,20 @@ for FILE in "$@"; do
 
     while IFS= read -r line || [[ -n "$line" ]]; do
 
-        # trim whitespace (safe POSIX way)
+        # trim whitespace
         line="${line#"${line%%[![:space:]]*}"}"
         line="${line%"${line##*[![:space:]]}"}"
 
         [[ -z "$line" || "${line:0:1}" == "#" ]] && continue
 
-        # expand ~
+        # expand ~/
         if [[ "$line" == "~/"* ]]; then
             line="${HOME}/${line#"~/"}"
         fi
 
-        # MUST stay absolute
+        # must be absolute
         [[ "$line" != /* ]] && continue
 
-        # output as absolute path (NO ./ conversion)
         printf '%s\n' "$line"
 
     done < "$FILE"

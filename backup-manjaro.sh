@@ -25,10 +25,11 @@ BACKUP_FILE="$BACKUP_DIR/$FILENAME"
 LOG_FILE="${BACKUP_FILE}.log"
 SUMMARY_LOG="${BACKUP_FILE}_summary.log"
 
-read -r -a EXCLUDES <<< "$(load_excludes "$SCRIPT_DIR" \
-    "$SCRIPT_DIR/global-exclusions.txt" \
-    "$SCRIPT_DIR/backup-manjaro-exclusions.txt"
-)"
+mapfile -t EXCLUDES < <(
+    load_excludes "$SCRIPT_DIR" \
+        "$SCRIPT_DIR/global-exclusions.txt" \
+        "$SCRIPT_DIR/backup-manjaro-exclusions.txt"
+)
 
 {
     log_info "Starting Manjaro backup at $(date)"

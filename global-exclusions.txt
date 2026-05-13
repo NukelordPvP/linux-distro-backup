@@ -2,6 +2,7 @@
 
 # Mounted dirs
 /mnt
+/media
 
 # Virtual/system dirs
 /dev/
