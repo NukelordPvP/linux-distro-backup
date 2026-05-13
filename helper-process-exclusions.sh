@@ -3,42 +3,54 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-source "$SCRIPT_DIR/helper-logging.sh"
-
 if [[ "$#" -lt 1 ]]; then
-    fatal "Usage: $0 <exclusion_file1> [exclusion_file2 ...]"
+    echo "Usage: $0 <exclusion_file1> [exclusion_file2 ...]" >&2
+    exit 1
 fi
 
 for FILE in "$@"; do
 
     if [[ ! -f "$FILE" ]]; then
-        log_warn "Missing exclusion file: $FILE"
+        echo "[!] Warning: missing exclusion file: $FILE" >&2
         continue
     fi
 
-    log_info "Loading exclusions from: $FILE"
+    # informational output -> stderr ONLY
+    echo "[*] Loading exclusions from: $FILE" >&2
 
     while IFS= read -r line || [[ -n "$line" ]]; do
 
+        # =========================================
         # Trim whitespace
+        # =========================================
+
         line="$(echo "$line" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
 
-        # Skip comments/blank lines
+        # =========================================
+        # Skip comments / blanks
+        # =========================================
+
         [[ -z "$line" || "$line" =~ ^# ]] && continue
 
+        # =========================================
         # Expand ~/
-        if [[ "$line" == ~/* ]]; then
-            line="${HOME}/${line#~/}"
+        # =========================================
+
+        if [[ "$line" == "~/"* ]]; then
+            line="${HOME}/${line#"~/"}"
         fi
 
-        # Convert absolute path to tar-style relative path
+        # =========================================
+        # Convert absolute paths to tar-relative
+        # =========================================
+
         if [[ "$line" == /* ]]; then
             line="./${line#/}"
         fi
 
-        summary_exclude "$line"
+        # =========================================
+        # Output exclusion
+        # =========================================
 
         echo "--exclude=$line"
 
