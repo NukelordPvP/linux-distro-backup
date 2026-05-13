@@ -48,7 +48,6 @@ if [[ "$BACKUP_BACKGROUND" == "1" ]]; then
     PID=$!
 
     log_ok "Backup running in background (PID: $PID)"
-
     echo "File: $BACKUP_FILE"
     echo "Log: $LOG_FILE"
     echo "Summary: $SUMMARY_LOG"
@@ -59,7 +58,6 @@ else
     run_job >"$LOG_FILE" 2>&1
 
     log_ok "Backup finished"
-
     echo "File: $BACKUP_FILE"
     echo "Log: $LOG_FILE"
     echo "Summary: $SUMMARY_LOG"

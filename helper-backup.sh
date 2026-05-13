@@ -6,9 +6,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/helper-logging.sh"
 
-# =========================================
+# =========================
 # CONFIG
-# =========================================
+# =========================
 
 BACKUP_COMPRESSION="${BACKUP_COMPRESSION:-xz}"
 BACKUP_COMPRESSION_LEVEL="${BACKUP_COMPRESSION_LEVEL:-9}"
@@ -18,9 +18,9 @@ BACKUP_TAR_ARGS=(
     --ignore-failed-read
 )
 
-# =========================================
+# =========================
 # COMPRESSION
-# =========================================
+# =========================
 
 get_compression_cmd() {
     case "$BACKUP_COMPRESSION" in
@@ -31,14 +31,13 @@ get_compression_cmd() {
     esac
 }
 
-# =========================================
-# LOAD EXCLUSIONS (TXT → TAR ARGS)
-# =========================================
+# =========================
+# EXCLUSION LOADER (tar args)
+# =========================
 
 load_tar_excludes() {
 
     local file ex
-    local args=()
 
     for file in "$@"; do
         [[ -f "$file" ]] || continue
@@ -52,7 +51,7 @@ load_tar_excludes() {
             [[ -z "$ex" ]] && continue
             [[ "${ex:0:1}" == "#" ]] && continue
 
-            # normalize
+            # normalize path
             ex="${ex#/}"
             ex="${ex%/}"
 
@@ -64,9 +63,9 @@ load_tar_excludes() {
     done
 }
 
-# =========================================
-# BACKUP ENGINE (CLEAN TAR-ONLY)
-# =========================================
+# =========================
+# BACKUP ENGINE
+# =========================
 
 run_backup_tar() {
 
@@ -82,11 +81,9 @@ run_backup_tar() {
     log_info "Loading exclusions..."
 
     local TAR_EXCLUDES=()
-    mapfile -t TAR_EXCLUDES < <(
-        load_tar_excludes "$@"
-    )
+    mapfile -t TAR_EXCLUDES < <(load_tar_excludes "$@")
 
-    # always exclude backup output directory
+    # always exclude backup directory
     local backup_dir
     backup_dir="$(dirname "$backup_file")"
     backup_dir="${backup_dir#/}"
