@@ -32,28 +32,35 @@ get_compression_cmd() {
 }
 
 # =========================================
-# EXCLUSION BUILDER (SAFE)
+# EXCLUSION BUILDER (FIXED: CLEAN STDOUT ONLY)
 # =========================================
 
 _build_find_prune() {
+
     local ex
     local args=()
 
     for ex in "$@"; do
+
         ex="${ex#--exclude=}"
         [[ -z "$ex" ]] && continue
         [[ "$ex" != /* ]] && continue
 
         ex=".${ex}"
-        log_info "Pruning: $ex"
+
+        # IMPORTANT: log MUST NOT contaminate stdout used by command substitution
+        log_info "Pruning: $ex" >&2
 
         args+=( -path "$ex" -o )
+
     done
 
+    # remove trailing -o safely
     if [[ "${#args[@]}" -gt 0 ]]; then
         unset 'args[${#args[@]}-1]'
     fi
 
+    # IMPORTANT: stdout = ONLY find args
     printf '%s\n' "${args[@]}"
 }
 
@@ -88,6 +95,7 @@ run_backup_tar() {
 
     if [[ "${#PRUNE_ARGS[@]}" -gt 0 ]]; then
         log_info "Using find-based exclusion traversal"
+
         find . \( "${PRUNE_ARGS[@]}" \) -prune -o -print > "$FILELIST"
     else
         log_info "No exclusions"
