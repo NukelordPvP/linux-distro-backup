@@ -27,13 +27,8 @@ BACKUP_FILE="$BACKUP_DIR/$FILENAME"
 LOG_FILE="${BACKUP_FILE}.log"
 SUMMARY_LOG="${BACKUP_FILE}_summary.log"
 
-mapfile -t EXCLUDES < <(
-    load_excludes "$SCRIPT_DIR" \
-        "$SCRIPT_DIR/global-exclusions.txt" \
-        "$SCRIPT_DIR/backup-manjaro-exclusions.txt"
-)
-
 run_job() {
+
     log_info "Starting Manjaro backup at $(date)"
 
     summary_info "Backup: $BACKUP_FILE"
@@ -41,33 +36,31 @@ run_job() {
 
     log_section "Loaded exclusions"
 
-    for EX in "${EXCLUDES[@]}"; do
-        CLEAN="${EX#--exclude=}"
-        summary_info "Exclude: $CLEAN"
-    done
-
-    run_backup_tar "$BACKUP_FILE" "${EXCLUDES[@]}"
+    run_backup_tar \
+        "$BACKUP_FILE" \
+        "$SCRIPT_DIR/global-exclusions.txt" \
+        "$SCRIPT_DIR/backup-manjaro-exclusions.txt"
 }
 
 if [[ "$BACKUP_BACKGROUND" == "1" ]]; then
 
     run_job >"$LOG_FILE" 2>&1 &
-    BACKUP_PID=$!
+    PID=$!
 
-    log_ok "Manjaro backup running in BACKGROUND (PID: $BACKUP_PID)"
+    log_ok "Backup running in background (PID: $PID)"
 
     echo "File: $BACKUP_FILE"
-    echo "Log:  $LOG_FILE"
+    echo "Log: $LOG_FILE"
     echo "Summary: $SUMMARY_LOG"
-    echo "PID: $BACKUP_PID"
+    echo "PID: $PID"
 
 else
 
     run_job >"$LOG_FILE" 2>&1
 
-    log_ok "Manjaro backup finished"
+    log_ok "Backup finished"
 
     echo "File: $BACKUP_FILE"
-    echo "Log:  $LOG_FILE"
+    echo "Log: $LOG_FILE"
     echo "Summary: $SUMMARY_LOG"
 fi

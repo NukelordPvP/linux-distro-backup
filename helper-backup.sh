@@ -32,40 +32,40 @@ get_compression_cmd() {
 }
 
 # =========================================
-# EXCLUSION BUILDER (FIXED: CLEAN STDOUT ONLY)
+# LOAD EXCLUSIONS (TXT → TAR ARGS)
 # =========================================
 
-_build_find_prune() {
+load_tar_excludes() {
 
-    local ex
+    local file ex
     local args=()
 
-    for ex in "$@"; do
+    for file in "$@"; do
+        [[ -f "$file" ]] || continue
 
-        ex="${ex#--exclude=}"
-        [[ -z "$ex" ]] && continue
-        [[ "$ex" != /* ]] && continue
+        while IFS= read -r ex || [[ -n "$ex" ]]; do
 
-        ex=".${ex}"
+            # trim whitespace
+            ex="${ex#"${ex%%[![:space:]]*}"}"
+            ex="${ex%"${ex##*[![:space:]]}"}"
 
-        # IMPORTANT: log MUST NOT contaminate stdout used by command substitution
-        log_info "Pruning: $ex" >&2
+            [[ -z "$ex" ]] && continue
+            [[ "${ex:0:1}" == "#" ]] && continue
 
-        args+=( -path "$ex" -o )
+            # normalize
+            ex="${ex#/}"
+            ex="${ex%/}"
 
+            [[ -z "$ex" ]] && continue
+
+            printf -- "--exclude=%s\n" "$ex"
+
+        done < "$file"
     done
-
-    # remove trailing -o safely
-    if [[ "${#args[@]}" -gt 0 ]]; then
-        unset 'args[${#args[@]}-1]'
-    fi
-
-    # IMPORTANT: stdout = ONLY find args
-    printf '%s\n' "${args[@]}"
 }
 
 # =========================================
-# SNAPSHOT BACKUP ENGINE
+# BACKUP ENGINE (CLEAN TAR-ONLY)
 # =========================================
 
 run_backup_tar() {
@@ -73,43 +73,33 @@ run_backup_tar() {
     local backup_file="$1"
     shift
 
-    local backup_dir
-    backup_dir="$(dirname "$backup_file")"
-
     local compression_cmd
     compression_cmd="$(get_compression_cmd)"
 
     log_info "Compression: $compression_cmd"
-
     cd /
 
-    set -- "$@" "$backup_dir"
+    log_info "Loading exclusions..."
 
-    log_info "Phase 1: building snapshot..."
+    local TAR_EXCLUDES=()
+    mapfile -t TAR_EXCLUDES < <(
+        load_tar_excludes "$@"
+    )
 
-    local FILELIST
-    FILELIST="$(mktemp)"
+    # always exclude backup output directory
+    local backup_dir
+    backup_dir="$(dirname "$backup_file")"
+    backup_dir="${backup_dir#/}"
 
-    local PRUNE_ARGS=()
-    mapfile -t PRUNE_ARGS < <(_build_find_prune "$@")
+    TAR_EXCLUDES+=( "--exclude=$backup_dir" )
 
-    if [[ "${#PRUNE_ARGS[@]}" -gt 0 ]]; then
-        log_info "Using find-based exclusion traversal"
-
-        find . \( "${PRUNE_ARGS[@]}" \) -prune -o -print > "$FILELIST"
-    else
-        log_info "No exclusions"
-        find . -print > "$FILELIST"
-    fi
-
-    log_info "Phase 2: archiving..."
+    log_info "Creating archive..."
 
     tar -cf "$backup_file" \
         -I "$compression_cmd" \
         "${BACKUP_TAR_ARGS[@]}" \
-        -T "$FILELIST"
-
-    rm -f "$FILELIST"
+        "${TAR_EXCLUDES[@]}" \
+        /
 
     log_ok "Backup complete: $backup_file"
 }
