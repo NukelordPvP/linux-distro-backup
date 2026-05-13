@@ -1,1 +1,6 @@
-Add per device unique exclusions
+Output top 20 largest directories in whole system
+sudo du -ahx / 2>/dev/null | sort -rh | head -20
+
+Add manual backups path override
+
+Add progress bar
