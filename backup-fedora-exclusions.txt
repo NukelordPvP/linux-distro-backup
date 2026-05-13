@@ -1,4 +1,4 @@
 # Exclusions
 
 # Games
-~/.local/share/Steam/steamapps/common/
+~/.local/share/Steam/steamapps/common/Halo The Master Chief Collection

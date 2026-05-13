@@ -1,19 +1,66 @@
-# Exclusions
-
-# Mounted dirs
+# =========================
+# MOUNT POINTS (USER / EXTERNAL STORAGE)
+# =========================
 /mnt
 /media
 
-# Virtual/system dirs
-/dev/
-/proc/
-/sys/
+# =========================
+# VIRTUAL FILESYSTEMS (KERNEL / SYSTEM)
+# =========================
+/dev
+/proc
+/sys
 
-# Cache
+# =========================
+# TEMP / CACHE
+# =========================
+/tmp
 /var/tmp
 /var/cache
-/tmp/
 ~/.cache
 
-# Logging
+# =========================
+# LOGGING
+# =========================
 /var/log/journal
+
+# =========================
+# BROWSER PROFILES (PRIVACY)
+# =========================
+~/.mozilla/firefox
+~/.config/chromium
+~/.config/google-chrome
+~/.config/BraveSoftware
+
+# =========================
+# STEAM (LOGIN + BROWSER CACHE ONLY)
+# =========================
+~/.steam/steam/config/loginusers.vdf
+~/.steam/steam/config/htmlcache
+~/.local/share/Steam/config/loginusers.vdf
+~/.local/share/Steam/config/htmlcache
+~/.local/share/Steam/htmlcache
+
+# =========================
+# SSH (PRIVATE KEYS ONLY)
+# =========================
+# ~/.ssh
+# ~/.ssh/id_rsa
+# ~/.ssh/id_rsa.pub
+# ~/.ssh/id_ed25519
+# ~/.ssh/id_ed25519.pub
+# ~/.ssh/id_ecdsa
+# ~/.ssh/id_ecdsa.pub
+# ~/.ssh/*_key
+# ~/.ssh/*-cert
+
+# =========================
+# GPG KEYS (CRITICAL PRIVACY)
+# =========================
+~/.gnupg
+
+# =========================
+# SHELL HISTORY (COMMAND LEAKS)
+# =========================
+~/.bash_history
+~/.zsh_history
