@@ -1,6 +1,6 @@
 #!/bin/bash
 # helper-backup.sh
-# Shared backup helpers/configuration (FIXED: proper traversal control)
+# Shared backup helpers/configuration (FIXED: stable find-based pruning)
 
 set -euo pipefail
 
@@ -25,7 +25,6 @@ BACKUP_TAR_ARGS=(
 # =========================================
 
 get_compression_cmd() {
-
     case "$BACKUP_COMPRESSION" in
         xz)
             echo "xz -${BACKUP_COMPRESSION_LEVEL}"
@@ -47,7 +46,6 @@ get_compression_cmd() {
 # =========================================
 
 log_backup_config() {
-
     summary_info "Compression: ${BACKUP_COMPRESSION} -${BACKUP_COMPRESSION_LEVEL}"
 
     for ARG in "${BACKUP_TAR_ARGS[@]}"; do
@@ -56,30 +54,36 @@ log_backup_config() {
 }
 
 # =========================================
-# EXCLUSION BUILDER (find-safe)
+# EXCLUSION BUILDER (FIXED)
+# Converts /mnt → ./mnt for find -path matching
 # =========================================
 
 _build_find_prune() {
 
+    local ex
     local args=()
 
     for ex in "$@"; do
 
         ex="${ex#--exclude=}"
 
-        # ignore empty
         [[ -z "$ex" ]] && continue
+
+        # convert absolute /path → ./path for find . traversal
+        if [[ "$ex" == /* ]]; then
+            ex=".${ex}"
+        fi
 
         args+=( -path "$ex" -o )
 
     done
 
-    # remove trailing -o
+    # remove trailing -o safely
     if [[ "${#args[@]}" -gt 0 ]]; then
         unset 'args[${#args[@]}-1]'
     fi
 
-    echo "${args[@]}"
+    printf '%s\0' "${args[@]}"
 }
 
 # =========================================
@@ -98,9 +102,9 @@ run_backup_tar() {
 
     cd /
 
-    # Build prune rules
-    local PRUNE_EXPR
-    PRUNE_EXPR=($(_build_find_prune "$@"))
+    # Build prune expression safely
+    local PRUNE_EXPR=()
+    mapfile -d '' -t PRUNE_EXPR < <(_build_find_prune "$@")
 
     if [[ "${#PRUNE_EXPR[@]}" -gt 0 ]]; then
 
@@ -121,5 +125,6 @@ run_backup_tar() {
             -I "$compression_cmd" \
             "${BACKUP_TAR_ARGS[@]}" \
             --files-from=-
+
     fi
 }

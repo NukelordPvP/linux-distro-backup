@@ -1,5 +1,4 @@
 #!/bin/bash
-# helper-process-exclusions.sh
 
 set -euo pipefail
 
@@ -10,49 +9,31 @@ fi
 
 for FILE in "$@"; do
 
-    if [[ ! -f "$FILE" ]]; then
+    [[ -f "$FILE" ]] || {
         echo "[!] Warning: missing exclusion file: $FILE" >&2
         continue
-    fi
+    }
 
-    # informational output -> stderr ONLY
     echo "[*] Loading exclusions from: $FILE" >&2
 
     while IFS= read -r line || [[ -n "$line" ]]; do
 
-        # =========================================
-        # Trim whitespace
-        # =========================================
+        # trim whitespace (safe POSIX way)
+        line="${line#"${line%%[![:space:]]*}"}"
+        line="${line%"${line##*[![:space:]]}"}"
 
-        line="$(echo "$line" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+        [[ -z "$line" || "${line:0:1}" == "#" ]] && continue
 
-        # =========================================
-        # Skip comments / blanks
-        # =========================================
-
-        [[ -z "$line" || "$line" =~ ^# ]] && continue
-
-        # =========================================
-        # Expand ~/
-        # =========================================
-
+        # expand ~
         if [[ "$line" == "~/"* ]]; then
             line="${HOME}/${line#"~/"}"
         fi
 
-        # =========================================
-        # Convert absolute paths to tar-relative
-        # =========================================
+        # MUST stay absolute
+        [[ "$line" != /* ]] && continue
 
-        if [[ "$line" == /* ]]; then
-            line="./${line#/}"
-        fi
-
-        # =========================================
-        # Output exclusion
-        # =========================================
-
-        echo "--exclude=$line"
+        # output as absolute path (NO ./ conversion)
+        printf '%s\n' "$line"
 
     done < "$FILE"
 

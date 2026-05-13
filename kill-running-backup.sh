@@ -1,6 +1,6 @@
 #!/bin/bash
 # kill-running-backup.sh
-# Force kills active distro backup jobs + optionally removes incomplete outputs
+# Force kills active distro backup jobs + cleans incomplete backup files
 
 set -euo pipefail
 
@@ -8,18 +8,19 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 source "$SCRIPT_DIR/helper-logging.sh"
 
+BACKUP_DIR="$SCRIPT_DIR/backups"
+
 LOCKS=(
     "/tmp/backup-fedora.lock"
     "/tmp/backup-manjaro.lock"
 )
 
 FOUND=0
-KILLED_FILES=()
 
 log_section "Searching for running backups"
 
 # =========================================
-# Kill tar backup processes
+# Kill running tar backup processes
 # =========================================
 
 while IFS= read -r LINE; do
@@ -52,7 +53,6 @@ while IFS= read -r LINE; do
         log_warn "Failed to kill PID $PID"
     else
         log_ok "Killed PID $PID"
-        KILLED_FILES+=("$CMD")
     fi
 
 done < <(
@@ -80,22 +80,21 @@ for LOCK in "${LOCKS[@]}"; do
 done
 
 # =========================================
-# DELETE INCOMPLETE FILES (NEW)
+# CLEANUP INCOMPLETE BACKUPS (FIXED PATH)
 # =========================================
 
-if [[ "$FOUND" -eq 1 ]]; then
+if [[ -d "$BACKUP_DIR" ]]; then
 
     echo
     log_section "Incomplete backup cleanup"
 
-    read -rp "Delete incomplete backup files? (y/N): " CONFIRM
+    read -rp "Delete incomplete backup files in $BACKUP_DIR? (y/N): " CONFIRM
 
     if [[ "$CONFIRM" =~ ^[Yy]$ ]]; then
 
-        echo
-        log_warn "Scanning for partial backup files..."
+        log_warn "Scanning: $BACKUP_DIR"
 
-        find . -maxdepth 1 -type f \( \
+        find "$BACKUP_DIR" -maxdepth 1 -type f \( \
             -name "*.tar.xz" -o \
             -name "*.tar.gz" -o \
             -name "*.tar.zst" -o \
@@ -113,6 +112,9 @@ if [[ "$FOUND" -eq 1 ]]; then
     else
         log_info "Skipped cleanup"
     fi
+
+else
+    log_warn "Backup directory not found: $BACKUP_DIR"
 fi
 
 # =========================================
