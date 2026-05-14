@@ -18,12 +18,20 @@
 /sys
 
 # =========================
+# RUNTIME FILESYSTEMS
+# =========================
+/run
+/var/run
+
+# =========================
 # TEMP / CACHE
 # =========================
 /tmp
 /var/tmp
 /var/cache
 ~/.cache
+/root/.cache
+/root/.cache/at-spi
 
 # =========================
 # LOGGING
@@ -197,4 +205,3 @@
 ~/.var/app/net.waterfox.waterfox
 ~/.var/app/org.chromium.Chromium
 ~/.var/app/org.mozilla.firefox
-
