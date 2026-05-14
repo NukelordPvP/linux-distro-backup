@@ -80,16 +80,3 @@ Compares a mounted `.img` filesystem with a mounted directory.
 📌 Provides a **quick validation**, not a full integrity check.
 
 ---
-
-## ⚠️ Limitations
-
-- No built-in checksum validation (e.g., SHA256)
-- `diff`-based comparisons are not exhaustive for integrity
-- Special files (symlinks, device nodes, ACLs) are not deeply verified
-
----
-
-## 🚀 Recommended Enhancement
-
-```bash
-rsync -navc /source/ /target/
