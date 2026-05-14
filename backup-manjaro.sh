@@ -13,13 +13,45 @@ source "$SCRIPT_DIR/common.sh"
 source "$SCRIPT_DIR/helper-logging.sh"
 source "$SCRIPT_DIR/helper-backup.sh"
 
-LOCK="/tmp/backup-manjaro.lock"
+# =========================
+# REAL USER
+# =========================
+
+REAL_USER="${SUDO_USER:-$USER}"
+REAL_GROUP="$(id -gn "$REAL_USER")"
+
+# =========================
+# LOCKING
+# =========================
+
+LOCK_DIR="$SCRIPT_DIR/.locks"
+
+mkdir -p "$LOCK_DIR"
+
+chown "$REAL_USER:$REAL_GROUP" "$LOCK_DIR" 2>/dev/null || true
+
+LOCK="$LOCK_DIR/backup-manjaro.lock"
+
+touch "$LOCK"
+
+chown "$REAL_USER:$REAL_GROUP" "$LOCK" 2>/dev/null || true
+
 exec 200>"$LOCK"
 
 flock -n 200 || {
     log_warn "Manjaro backup already running"
     exit 1
 }
+
+cleanup_lock() {
+    rm -f "$LOCK"
+}
+
+trap cleanup_lock EXIT
+
+# =========================
+# CONFIG
+# =========================
 
 BACKUP_BACKGROUND="${BACKUP_BACKGROUND:-0}"
 
@@ -40,8 +72,9 @@ if [[ -z "$FILENAME" ]]; then
 fi
 
 BACKUP_FILE="$BACKUP_DIR/$FILENAME"
-LOG_FILE="${BACKUP_FILE}.log"
-SUMMARY_LOG="${BACKUP_FILE}_summary.log"
+
+LOG_FILE="${BACKUP_FILE%.tar.*}.log"
+SUMMARY_LOG="${BACKUP_FILE%.tar.*}_summary.log"
 
 # =========================
 # JOB
@@ -59,6 +92,15 @@ run_job() {
         "$BACKUP_FILE" \
         "$SCRIPT_DIR/global-exclusions.txt" \
         "$SCRIPT_DIR/backup-manjaro-exclusions.txt"
+
+    # =========================
+    # FIX OWNERSHIP
+    # =========================
+
+    chown "$REAL_USER:$REAL_GROUP" \
+        "$BACKUP_FILE" \
+        "$LOG_FILE" \
+        "$SUMMARY_LOG" 2>/dev/null || true
 }
 
 # =========================
@@ -72,6 +114,10 @@ if [[ "$BACKUP_BACKGROUND" == "1" ]]; then
     ) >"$LOG_FILE" 2>&1 &
 
     PID=$!
+
+    chown "$REAL_USER:$REAL_GROUP" \
+        "$LOG_FILE" \
+        "$SUMMARY_LOG" 2>/dev/null || true
 
     log_ok "Backup running in background (PID: $PID)"
 

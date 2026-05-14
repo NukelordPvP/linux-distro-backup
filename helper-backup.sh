@@ -103,7 +103,7 @@ run_backup_tar() {
 
         TAR_EXCLUDES+=( "--exclude=$ex" )
 
-        ((EXCLUDED_COUNT++))
+        ((++EXCLUDED_COUNT))
 
     done < <(load_tar_excludes "$@")
 
@@ -115,7 +115,7 @@ run_backup_tar() {
 
     log_info "Exclude: /$backup_dir"
 
-    ((EXCLUDED_COUNT++))
+    ((++EXCLUDED_COUNT))
 
     # =========================
     # SUMMARY PRE-STATS
