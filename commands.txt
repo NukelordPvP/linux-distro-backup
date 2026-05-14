@@ -1,0 +1,2 @@
+BACKUP_PATH="/mnt/22TB_HDD/Backups" ./backup-fedora.sh
+BACKUP_PATH="/mnt/22TB_HDD/Backups" ./backup-manjaro.sh
