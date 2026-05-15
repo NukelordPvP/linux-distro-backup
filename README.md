@@ -2,7 +2,7 @@
 
 A collection of Linux utility scripts for:
 
-- Full Linux system backups
+- Full PS4Linux Distro backups
 - Root filesystem restoration
 - Disk image cloning
 - Filesystem comparison
@@ -10,7 +10,7 @@ A collection of Linux utility scripts for:
 - Storage analysis
 - Backup archival
 
-Designed primarily for PS4 Linux environments, but usable on most Linux distributions.
+Designed primarily for PS4Linux Distros, but usable on most Linux distributions.
 
 ---
 
@@ -59,7 +59,7 @@ linux-distro-backup/
 
 ## 🔹 `backup-fedora.sh`
 
-Creates a compressed Linux filesystem backup for Fedora-based systems.
+Creates a compressed PS4Linux Distro filesystem backup for Fedora-based systems.
 
 ### Features
 
@@ -90,7 +90,7 @@ BACKUP_PATH="/mnt/storage/backups" bash backup-fedora.sh
 
 ## 🔹 `backup-manjaro.sh`
 
-Creates a compressed Linux filesystem backup for Manjaro-based systems.
+Creates a compressed PS4Linux Distro filesystem backup for Manjaro-based systems.
 
 ### Features
 
@@ -374,10 +374,10 @@ bash topdirs.sh
 
 # Intended Use Cases
 
-- PS4 Linux backups
+- PS4Linux Distro backups
 - Long-term archival
 - External storage backups
 - Linux migration
 - Root filesystem restoration
-- Offline archive sharing
+- Compressed archive sharing of PS4Linux Distros
 - Disk image deployment
