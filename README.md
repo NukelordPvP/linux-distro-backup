@@ -6,9 +6,9 @@ A collection of Linux utility scripts for:
 - Root filesystem restoration
 - Disk image cloning
 - Filesystem comparison
-- Chroot recovery environments
+- Chroot recovery
 - Storage analysis
-- Backup automation
+- Backup archival
 
 Designed primarily for PS4 Linux environments, but usable on most Linux distributions.
 
@@ -22,9 +22,10 @@ Designed primarily for PS4 Linux environments, but usable on most Linux distribu
 - Summary logging
 - Configurable exclusions
 - Persistent remembered backup paths
-- Storage analysis tools
+- Storage analysis tooling
 - Safe handling of virtual/system filesystems
 - Restore and verification tooling
+- Compressed archive generation
 
 ---
 
@@ -58,7 +59,7 @@ linux-distro-backup/
 
 ## 🔹 `backup-fedora.sh`
 
-Creates a compressed Linux system backup for Fedora-based systems.
+Creates a compressed Linux filesystem backup for Fedora-based systems.
 
 ### Features
 
@@ -71,15 +72,7 @@ Creates a compressed Linux system backup for Fedora-based systems.
   - zstd
 - Persistent remembered backup path
 - Ownership correction for generated files
-- Separate runtime log and summary log
-
-### Generated Files
-
-```text
-backup.tar.xz
-backup.log
-backup_summary.log
-```
+- Runtime and summary logging
 
 ### Example
 
@@ -97,7 +90,7 @@ BACKUP_PATH="/mnt/storage/backups" bash backup-fedora.sh
 
 ## 🔹 `backup-manjaro.sh`
 
-Creates a compressed Linux system backup for Manjaro-based systems.
+Creates a compressed Linux filesystem backup for Manjaro-based systems.
 
 ### Features
 
@@ -120,9 +113,9 @@ bash backup-manjaro.sh
 
 Core backup engine.
 
-### Responsibilities
+### Handles
 
-- Compression handling
+- Compression
 - Tar archive generation
 - Exclusion processing
 - Backup validation
@@ -147,7 +140,7 @@ BACKUP_COMPRESSION_LEVEL
 
 ## 🔹 `helper-logging.sh`
 
-Provides:
+Handles:
 
 - Terminal logging
 - Summary logging
@@ -158,13 +151,13 @@ Provides:
 
 ## 🔹 `common.sh`
 
-Shared framework functions:
+Shared helper functions:
 
 - Timestamp generation
 - Backup path selection
 - Remembered backup path storage
 - Filename generation
-- Directory creation helpers
+- Directory creation
 
 ---
 
@@ -178,10 +171,10 @@ Examples:
 
 - `/proc`
 - `/sys`
-- browser profiles
 - caches
+- browser profiles
 - machine identity files
-- Steam caches
+- Steam cache/runtime data
 - temporary files
 
 ---
@@ -200,18 +193,18 @@ Manjaro-specific exclusions.
 
 ## 🔹 `topdirs-ignore.txt`
 
-Directories hidden from `topdirs.sh` analysis output.
+Directories hidden from `topdirs.sh` output.
 
 This allows:
 
-- keeping directories in backups
-- while hiding known large/noisy paths from storage analysis
+- keeping directories inside backups
+- hiding known large/noisy paths from storage analysis
 
 Examples:
 
 - `/usr`
-- Steam runtimes
 - Flatpak runtimes
+- Steam runtimes
 - Proton data
 
 ---
@@ -220,19 +213,13 @@ Examples:
 
 ## 🔹 `topdirs.sh`
 
-Displays the largest directories/files on the system while respecting exclusion and ignore lists.
+Displays the largest directories/files while respecting exclusion and ignore lists.
 
-### Features
+### Reads
 
-- Reads:
-  - `global-exclusions.txt`
-  - distro exclusions
-  - `topdirs-ignore.txt`
-- Filters noisy directories
-- Helps identify:
-  - unexpected storage growth
-  - forgotten files
-  - large user data
+- `global-exclusions.txt`
+- distro exclusions
+- `topdirs-ignore.txt`
 
 ### Example
 
@@ -246,13 +233,7 @@ bash topdirs.sh
 
 ## 🔹 `extract_tarxz_to_drive.sh`
 
-Extracts a `.tar.xz` backup archive onto a mounted filesystem.
-
-### Use Cases
-
-- Full system restoration
-- Migration to another drive
-- Recovery operations
+Extracts a `.tar.xz` archive onto a mounted filesystem.
 
 ---
 
@@ -260,15 +241,7 @@ Extracts a `.tar.xz` backup archive onto a mounted filesystem.
 
 Clones a raw `.img` file directly onto a target drive.
 
-### Warning
-
-⚠️ This completely overwrites the destination drive.
-
-### Use Cases
-
-- Full disk deployment
-- PS4 Linux duplication
-- Rapid restore workflows
+⚠️ Completely overwrites the destination drive.
 
 ---
 
@@ -277,12 +250,6 @@ Clones a raw `.img` file directly onto a target drive.
 ## 🔹 `mount-img.sh`
 
 Mounts raw `.img` files using loop devices.
-
-### Useful For
-
-- Inspecting disk images
-- Editing images
-- Recovery operations
 
 ---
 
@@ -299,13 +266,6 @@ Mounts required pseudo-filesystems and enters a `chroot`.
 /run
 ```
 
-### Useful For
-
-- Recovery
-- Repairing broken installs
-- Rebuilding initramfs
-- Reinstalling bootloaders
-
 ---
 
 # Verification / Diff Utilities
@@ -314,22 +274,17 @@ Mounts required pseudo-filesystems and enters a `chroot`.
 
 Compares a mounted image against another mounted filesystem.
 
-### Useful For
-
-- Quick restore verification
-- Structural comparison
-
 ---
 
 ## 🔹 `diff-source-vs-backup.sh`
 
 Compares two extracted root filesystems.
 
-### Features
+### Checks
 
-- Structural difference checks
-- Missing file detection
-- `/etc/passwd` comparison
+- Structural differences
+- Missing files
+- `/etc/passwd` differences
 
 ---
 
@@ -339,7 +294,7 @@ Compares two extracted root filesystems.
 
 Contains:
 
-- detailed tar output
+- tar output
 - exclusion loading
 - errors
 - runtime activity
@@ -360,7 +315,7 @@ Contains:
 - compression used
 - file counts
 - excluded item counts
-- final archive size
+- archive size
 - runtime duration
 
 Example:
@@ -407,44 +362,22 @@ bash topdirs.sh
 
 # Notes
 
-- Scripts are designed for Bash
+- Scripts are written for Bash
 - Most operations require root privileges
-- Exclusions are intentionally aggressive for:
+- Exclusions prioritize:
   - privacy
-  - caches
-  - runtime filesystems
+  - cache removal
+  - runtime filesystem safety
 - Compatible with most Linux distributions with minor modification
-
----
-
-# Recommended Compression
-
-## Fast
-
-```text
-zstd -5
-```
-
-## Balanced
-
-```text
-xz -3
-```
-
-## Maximum Compression
-
-```text
-xz -9
-```
 
 ---
 
 # Intended Use Cases
 
 - PS4 Linux backups
-- Disaster recovery
-- Offline archival
+- Long-term archival
+- External storage backups
 - Linux migration
 - Root filesystem restoration
-- Storage auditing
-- Image deployment
+- Offline archive sharing
+- Disk image deployment
