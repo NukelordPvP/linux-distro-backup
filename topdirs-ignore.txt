@@ -1,0 +1,17 @@
+# OS
+/usr
+/usr/share
+/usr/lib
+/usr/lib64
+
+# Steam installed games
+~/.local/share/Steam/steamapps/common
+
+# Proton runtimes
+~/.local/share/Steam/steamapps/common/Proton*
+
+# Flatpak
+/var/lib/flatpak
+
+# Wine
+/opt/wine-staging
