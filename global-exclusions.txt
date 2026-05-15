@@ -1,3 +1,7 @@
+# =========================================================
+# SYSTEM EXCLUSIONS
+# =========================================================
+
 # =========================
 # MOUNT POINTS (USER / EXTERNAL STORAGE)
 # =========================
@@ -38,14 +42,25 @@
 # LOGGING
 # =========================
 /var/log/journal
+/var/log/messages*
+/var/log/dmesg*
+/var/log/wtmp
+/var/log/btmp
+/var/log/lastlog
 
 # =========================
-# BROWSER PROFILES (PRIVACY)
+# SYSTEM DATABASES / CACHES
 # =========================
-~/.mozilla/firefox
-~/.config/chromium
-~/.config/google-chrome
-~/.config/BraveSoftware
+/var/lib/plocate/plocate.db
+/var/cache/dnf
+/var/lib/dnf/history.sqlite
+/var/lib/dnf/history.sqlite-wal
+/var/lib/dnf/history.sqlite-shm
+
+# =========================
+# SYSTEMD COREDUMPS
+# =========================
+/var/lib/systemd/coredump
 
 # =========================
 # STEAM (LOGIN + CACHE + TEMP)
@@ -77,6 +92,50 @@
 
 # Steam workshop content
 ~/.local/share/Steam/steamapps/workshop
+
+# =========================
+# SNAP (CACHE / DEVICE IDENTITY)
+# =========================
+/var/lib/snapd/cache
+/var/lib/snapd/cookie
+/var/lib/snapd/snaps
+/var/lib/snapd/device
+
+# =========================
+# CONTAINERS / VM CACHE
+# =========================
+~/.local/share/containers
+~/.docker
+/var/lib/docker
+
+# =========================
+# TORRENTS / TEMP DOWNLOADS
+# =========================
+~/.local/share/qBittorrent
+~/.config/qBittorrent
+
+# =========================
+# PACKAGE / BUILD CACHE
+# =========================
+~/.cache/pip
+~/.cache/yay
+
+# =========================
+# CRASH REPORTS
+# =========================
+/var/spool/abrt
+
+# =========================================================
+# OTHER EXCLUSIONS
+# =========================================================
+
+# =========================
+# BROWSER PROFILES (PRIVACY)
+# =========================
+~/.mozilla/firefox
+~/.config/chromium
+~/.config/google-chrome
+~/.config/BraveSoftware
 
 # =========================
 # SSH
@@ -124,14 +183,6 @@
 # TRASH
 # =========================
 ~/.local/share/Trash
-
-# =========================
-# SNAP (CACHE / DEVICE IDENTITY)
-# =========================
-/var/lib/snapd/cache
-/var/lib/snapd/cookie
-/var/lib/snapd/snaps
-/var/lib/snapd/device
 
 # =========================
 # DISCORD
@@ -230,31 +281,6 @@
 ~/.var/app/org.mozilla.firefox
 
 # =========================
-# CONTAINERS / VM CACHE
-# =========================
-~/.local/share/containers
-~/.docker
-/var/lib/docker
-
-# =========================
-# TORRENTS / TEMP DOWNLOADS
-# =========================
-~/.local/share/qBittorrent
-~/.config/qBittorrent
-
-# =========================
-# PACKAGE / BUILD CACHE
-# =========================
-~/.cache/pip
-~/.cache/yay
-
-# =========================
 # BACKUP OUTPUT
 # =========================
-~/.local/share/Trash
 ~/Scripts/Unmanaged/linux-distro-backup/backups
-
-# =========================
-# CRASH REPORTS
-# =========================
-/var/spool/abrt
