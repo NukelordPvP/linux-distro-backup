@@ -1,17 +1,40 @@
-# OS
+# =========================
+# OS / SYSTEM
+# =========================
 /usr
 /usr/share
 /usr/lib
 /usr/lib64
 
-# Steam installed games
-~/.local/share/Steam/steamapps/common
-
-# Proton runtimes
-~/.local/share/Steam/steamapps/common/Proton*
-
-# Flatpak
+# =========================
+# FLATPAK
+# =========================
 /var/lib/flatpak
 
-# Wine
-/opt/wine-staging
+# =========================
+# STEAM RUNTIMES
+# =========================
+~/.local/share/Steam/ubuntu12_32
+~/.local/share/Steam/ubuntu12_64
+~/.local/share/Steam/steamrt64
+~/.local/share/Steam/package
+
+# =========================
+# STEAM COMPATDATA
+# =========================
+~/.local/share/Steam/steamapps/compatdata
+
+# =========================
+# STEAM INSTALLED GAMES
+# =========================
+~/.local/share/Steam/steamapps/common
+
+# =========================
+# CHROME
+# =========================
+/opt/google
+
+# =========================
+# OPTIONAL SOFTWARE
+# =========================
+/opt
