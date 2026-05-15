@@ -1,82 +1,383 @@
 # Linux Utility Scripts
 
-A collection of general-purpose Linux scripts for backing up systems, cloning images, mounting filesystems, verifying data integrity, and working with extracted root filesystems.
+A collection of Linux utility scripts for:
+
+- Full PS4Linux Distro backups
+- Root filesystem restoration
+- Disk image cloning
+- Filesystem comparison
+- Chroot recovery
+- Storage analysis
+- Backup archival
+
+Designed primarily for PS4Linux Distros, but usable on most Linux distributions.
 
 ---
 
-## 📜 Script Overview
+# Features
 
-### 🔹 `backup-fedora.sh`
-Creates a compressed `.tar.xz` backup of a Fedora-based system.
-
-- Automatically selects backup location (mounted drive or fallback directory)
-- Excludes virtual/system directories (`/proc`, `/sys`, `/dev`)
-- Runs in the background with logging
+- Automatic backup destination selection
+- Background backup execution
+- Real-time logging
+- Summary logging
+- Configurable exclusions
+- Persistent remembered backup paths
+- Storage analysis tooling
+- Safe handling of virtual/system filesystems
+- Restore and verification tooling
+- Compressed archive generation
 
 ---
 
-### 🔹 `backup-manjaro.sh`
-Creates a compressed `.tar.xz` backup of a Manjaro-based system.
+# Directory Structure
+
+```text
+linux-distro-backup/
+├── backup-fedora.sh
+├── backup-manjaro.sh
+├── helper-backup.sh
+├── helper-logging.sh
+├── helper-process-exclusions.sh
+├── common.sh
+├── global-exclusions.txt
+├── backup-fedora-exclusions.txt
+├── backup-manjaro-exclusions.txt
+├── topdirs-ignore.txt
+├── topdirs.sh
+├── extract_tarxz_to_drive.sh
+├── clone-img-to-drive.sh
+├── mount-img.sh
+├── mount-&-chroot.sh
+├── verify_img_vs_drive.sh
+├── diff-source-vs-backup.sh
+└── backups/
+```
+
+---
+
+# Backup Scripts
+
+## 🔹 `backup-fedora.sh`
+
+Creates a compressed PS4Linux Distro filesystem backup for Fedora-based systems.
+
+### Features
+
+- Automatic backup destination detection
+- Background execution support
+- Lock protection against duplicate runs
+- Compression support:
+  - xz
+  - gzip
+  - zstd
+- Persistent remembered backup path
+- Ownership correction for generated files
+- Runtime and summary logging
+
+### Example
+
+```bash
+bash backup-fedora.sh
+```
+
+Custom destination:
+
+```bash
+BACKUP_PATH="/mnt/storage/backups" bash backup-fedora.sh
+```
+
+---
+
+## 🔹 `backup-manjaro.sh`
+
+Creates a compressed PS4Linux Distro filesystem backup for Manjaro-based systems.
+
+### Features
 
 - Timestamped backups
-- Background execution
-- Safe exclusions for system directories
+- Foreground or background execution
+- Shared exclusion framework
+- Summary statistics logging
 
-📌 Can be easily modified for any distro.
+### Example
 
----
-
-### 🔹 `clone_img_to_drive.sh`
-Clones a `.img` file directly onto a target drive.
-
-- Performs block-level copy (e.g., using `dd`)
-- Used for full system deployment or duplication
-
-⚠️ **Warning:** This will overwrite the target drive completely.
+```bash
+bash backup-manjaro.sh
+```
 
 ---
 
-### 🔹 `diff_source_vs_backup.sh`
-Compares two extracted root filesystems (directories of loose files).
+# Backup Framework
 
-- Lists structural differences
-- Compares `/etc/passwd` entries
-- Identifies files present in one location but not the other
+## 🔹 `helper-backup.sh`
 
-📌 Requires both source and target to be **mounted or extracted**, not compressed archives.
+Core backup engine.
 
----
+### Handles
 
-### 🔹 `extract_tarxz_to_drive.sh`
-Extracts a `.tar.xz` archive to a target directory or mounted drive.
+- Compression
+- Tar archive generation
+- Exclusion processing
+- Backup validation
+- Summary statistics generation
 
-- Restores full filesystem backups
-- Maintains directory structure (permissions depend on tar flags)
+### Supported Compression
 
----
+```text
+xz
+gzip
+zstd
+```
 
-### 🔹 `mount_&_chroot.sh`
-Mounts required system directories and enters a `chroot` environment.
+Configured using:
 
-- Mounts `/dev`, `/proc`, `/sys`
-- Allows working inside another Linux installation
-
----
-
-### 🔹 `mount_img.sh`
-Mounts a `.img` file using loop devices.
-
-- Useful for inspecting or modifying disk images
-- Works with raw disk images
+```bash
+BACKUP_COMPRESSION
+BACKUP_COMPRESSION_LEVEL
+```
 
 ---
 
-### 🔹 `verify_img_vs_drive.sh`
-Compares a mounted `.img` filesystem with a mounted directory.
+## 🔹 `helper-logging.sh`
 
-- Checks structure and key system files
-- Uses `diff` for identifying differences
+Handles:
 
-📌 Provides a **quick validation**, not a full integrity check.
+- Terminal logging
+- Summary logging
+- Fatal error handling
+- Section formatting
 
 ---
+
+## 🔹 `common.sh`
+
+Shared helper functions:
+
+- Timestamp generation
+- Backup path selection
+- Remembered backup path storage
+- Filename generation
+- Directory creation
+
+---
+
+# Exclusion System
+
+## 🔹 `global-exclusions.txt`
+
+Global exclusions shared across backups.
+
+Examples:
+
+- `/proc`
+- `/sys`
+- caches
+- browser profiles
+- machine identity files
+- Steam cache/runtime data
+- temporary files
+
+---
+
+## 🔹 `backup-fedora-exclusions.txt`
+
+Fedora-specific exclusions.
+
+---
+
+## 🔹 `backup-manjaro-exclusions.txt`
+
+Manjaro-specific exclusions.
+
+---
+
+## 🔹 `topdirs-ignore.txt`
+
+Directories hidden from `topdirs.sh` output.
+
+This allows:
+
+- keeping directories inside backups
+- hiding known large/noisy paths from storage analysis
+
+Examples:
+
+- `/usr`
+- Flatpak runtimes
+- Steam runtimes
+- Proton data
+
+---
+
+# Storage Analysis
+
+## 🔹 `topdirs.sh`
+
+Displays the largest directories/files while respecting exclusion and ignore lists.
+
+### Reads
+
+- `global-exclusions.txt`
+- distro exclusions
+- `topdirs-ignore.txt`
+
+### Example
+
+```bash
+bash topdirs.sh
+```
+
+---
+
+# Restore / Deployment Scripts
+
+## 🔹 `extract_tarxz_to_drive.sh`
+
+Extracts a `.tar.xz` archive onto a mounted filesystem.
+
+---
+
+## 🔹 `clone-img-to-drive.sh`
+
+Clones a raw `.img` file directly onto a target drive.
+
+⚠️ Completely overwrites the destination drive.
+
+---
+
+# Mounting Utilities
+
+## 🔹 `mount-img.sh`
+
+Mounts raw `.img` files using loop devices.
+
+---
+
+## 🔹 `mount-&-chroot.sh`
+
+Mounts required pseudo-filesystems and enters a `chroot`.
+
+### Mounts
+
+```text
+/dev
+/proc
+/sys
+/run
+```
+
+---
+
+# Verification / Diff Utilities
+
+## 🔹 `verify_img_vs_drive.sh`
+
+Compares a mounted image against another mounted filesystem.
+
+---
+
+## 🔹 `diff-source-vs-backup.sh`
+
+Compares two extracted root filesystems.
+
+### Checks
+
+- Structural differences
+- Missing files
+- `/etc/passwd` differences
+
+---
+
+# Logs
+
+## Runtime Log
+
+Contains:
+
+- tar output
+- exclusion loading
+- errors
+- runtime activity
+
+Example:
+
+```text
+backup.log
+```
+
+---
+
+## Summary Log
+
+Contains:
+
+- backup destination
+- compression used
+- file counts
+- excluded item counts
+- archive size
+- runtime duration
+
+Example:
+
+```text
+backup_summary.log
+```
+
+---
+
+# Example Workflow
+
+## Create Backup
+
+```bash
+bash backup-fedora.sh
+```
+
+---
+
+## Restore Backup
+
+```bash
+bash extract_tarxz_to_drive.sh
+```
+
+---
+
+## Enter Chroot
+
+```bash
+bash mount-\&-chroot.sh
+```
+
+---
+
+## Analyze Storage Usage
+
+```bash
+bash topdirs.sh
+```
+
+---
+
+# Notes
+
+- Scripts are written for Bash
+- Most operations require root privileges
+- Exclusions prioritize:
+  - privacy
+  - cache removal
+  - runtime filesystem safety
+- Compatible with most Linux distributions with minor modification
+
+---
+
+# Intended Use Cases
+
+- PS4Linux Distro backups
+- Long-term archival
+- External storage backups
+- Linux migration
+- Root filesystem restoration
+- Compressed archive sharing of PS4Linux Distros
+- Disk image deployment
