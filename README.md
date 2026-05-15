@@ -87,12 +87,6 @@ backup_summary.log
 bash backup-fedora.sh
 ```
 
-Custom backup filename:
-
-```bash
-bash backup-fedora.sh mybackup
-```
-
 Custom destination:
 
 ```bash
