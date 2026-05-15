@@ -58,11 +58,22 @@
 ~/.local/share/Steam/config/htmlcache
 ~/.local/share/Steam/htmlcache
 
-# Steam caches
+# Steam cache
 ~/.local/share/Steam/steamapps/shadercache
 ~/.local/share/Steam/steamapps/downloading
 ~/.local/share/Steam/steamapps/temp
 ~/.local/share/Steam/logs
+
+# =========================
+# STEAM RUNTIMES
+# =========================
+~/.local/share/Steam/steamrt32
+~/.local/share/Steam/steamrt64
+~/.local/share/Steam/ubuntu12_32
+~/.local/share/Steam/ubuntu12_64
+~/.local/share/Steam/package
+~/.local/share/Steam/steamui
+~/.local/share/Steam/appcache
 
 # Steam workshop content
 ~/.local/share/Steam/steamapps/workshop
@@ -242,3 +253,8 @@
 # =========================
 ~/.local/share/Trash
 ~/Scripts/Unmanaged/linux-distro-backup/backups
+
+# =========================
+# CRASH REPORTS
+# =========================
+/var/spool/abrt

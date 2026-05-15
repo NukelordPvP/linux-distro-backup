@@ -5,19 +5,15 @@
 /usr/share
 /usr/lib
 /usr/lib64
+/home
+~/.local
+~/.local/share
+/boot
 
 # =========================
 # FLATPAK
 # =========================
 /var/lib/flatpak
-
-# =========================
-# STEAM RUNTIMES
-# =========================
-~/.local/share/Steam/ubuntu12_32
-~/.local/share/Steam/ubuntu12_64
-~/.local/share/Steam/steamrt64
-~/.local/share/Steam/package
 
 # =========================
 # STEAM COMPATDATA
