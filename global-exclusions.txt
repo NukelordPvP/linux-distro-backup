@@ -29,6 +29,7 @@
 /tmp
 /var/tmp
 /var/cache
+/var/cache/pacman/pkg
 ~/.cache
 /root/.cache
 /root/.cache/at-spi
@@ -47,13 +48,24 @@
 ~/.config/BraveSoftware
 
 # =========================
-# STEAM (LOGIN + BROWSER CACHE ONLY)
+# STEAM (LOGIN + CACHE + TEMP)
 # =========================
 ~/.steam/steam/config/loginusers.vdf
 ~/.steam/steam/config/htmlcache
+~/.steam/steam/package
+
 ~/.local/share/Steam/config/loginusers.vdf
 ~/.local/share/Steam/config/htmlcache
 ~/.local/share/Steam/htmlcache
+
+# Steam caches
+~/.local/share/Steam/steamapps/shadercache
+~/.local/share/Steam/steamapps/downloading
+~/.local/share/Steam/steamapps/temp
+~/.local/share/Steam/logs
+
+# Steam workshop content
+~/.local/share/Steam/steamapps/workshop
 
 # =========================
 # SSH
@@ -116,7 +128,7 @@
 ~/.config/discord
 ~/.config/discordcanary
 ~/.config/discordptb
-~/.config/BetterDiscord/
+~/.config/BetterDiscord
 
 # =========================
 # TeamSpeak
@@ -205,3 +217,28 @@
 ~/.var/app/net.waterfox.waterfox
 ~/.var/app/org.chromium.Chromium
 ~/.var/app/org.mozilla.firefox
+
+# =========================
+# CONTAINERS / VM CACHE
+# =========================
+~/.local/share/containers
+~/.docker
+/var/lib/docker
+
+# =========================
+# TORRENTS / TEMP DOWNLOADS
+# =========================
+~/.local/share/qBittorrent
+~/.config/qBittorrent
+
+# =========================
+# PACKAGE / BUILD CACHE
+# =========================
+~/.cache/pip
+~/.cache/yay
+
+# =========================
+# BACKUP OUTPUT
+# =========================
+~/.local/share/Trash
+~/Scripts/Unmanaged/linux-distro-backup/backups
