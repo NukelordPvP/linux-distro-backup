@@ -48,6 +48,7 @@
 /var/log/btmp
 /var/log/lastlog
 /var/log/audit
+/var/log/anaconda
 
 # =========================
 # SYSTEM DATABASES / CACHES
@@ -285,3 +286,15 @@
 # CRASH REPORTS
 # =========================
 /var/spool/abrt
+
+# =========================
+# UDEV HARDWARE DATABASE
+# =========================
+/etc/udev/hwdb.bin
+
+# =========================
+# OPTIONAL SELINUX CACHE / POLICY
+# =========================
+# Only enable if you are OK with SELinux
+# relabel/rebuild behavior after restore.
+# /var/lib/selinux
