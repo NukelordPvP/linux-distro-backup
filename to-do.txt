@@ -4,3 +4,16 @@ sudo du -ahx / 2>/dev/null | sort -rh | head -20
 Add manual backups path override
 
 Add progress bar
+
+Add these commands somewhere to some readme/script
+Copy the contents of your plugged in mounted OS drive to the new destination drive while preserving all important system-level data
+cd /media/brownbox/psxitarch
+sudo rsync -aAXHv --numeric-ids --info=progress2 --exclude=dev/ --exclude=proc/ --exclude=sys/ --exclude=var/cache/ ./ /media/brownbox/psxitarch1/
+
+Copy the contents of your plugged in mounted OS drive to a temp folder on the build machine while preserving all important system-level data
+cd /media/brownbox/psxitarch
+sudo rsync -aAXHv --numeric-ids --info=progress2 --exclude=dev/ --exclude=proc/ --exclude=sys/ --exclude=var/cache/ ./ /home/brownbox/Sony-Jailbreaking/Linux/PS4Linux/Distro/Manjaro/
+
+Copy the contents of your temp folder on the build machine back to our plugged in mounted OS drive while preserving all important system-level data
+cd /home/brownbox/Sony-Jailbreaking/PS4Linux-Distro/Manjaro/
+sudo rsync -aAXHv --numeric-ids --info=progress2 --exclude=dev/ --exclude=proc/ --exclude=sys/ --exclude=var/cache/ ./ /media/brownbox/psxitarch/
